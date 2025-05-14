@@ -11,6 +11,25 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { fetchWeeklyContributions } from './githubService.js';
 import { Preferences } from './perfs.js';
 
+const BOX_SIZE = 14;
+const BOX_MARGIN = 4;
+const BORDER_RADIUS = 3;
+const COLORS = {
+    ACTIVE: '#4CAF50',
+    INACTIVE: '#8e8e8e',
+    DEFAULT: '#888888'
+};
+const MESSAGES = {
+    NO_DATA: 'No data available',
+    NO_COMMITS: 'No commit data available',
+    MISSING_CREDENTIALS: 'Missing GitHub username or token',
+    PREFS_ERROR: 'Failed to open extension preferences.'
+};
+const DATE_FORMAT = { month: 'short' };
+const DEFAULT_OPACITY = 50;
+const MAX_OPACITY_INCREASE = 205;
+const OPACITY_PER_COMMIT = 20;
+
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
         _init(preferences) {
@@ -19,40 +38,49 @@ const Indicator = GObject.registerClass(
             this._preferences = preferences;
             this._prefsChangedId = null;
             this._boxes = [];
-            this._BOX_SIZE = 14;
-            this._BOX_MARGIN = 4;
-            this._BORDER_RADIUS = 3;
             this._refreshTimeoutId = null;
+            this._commitSection = null;
+            this._separator = null;
 
-            let containerBox = new St.BoxLayout({
+            this._buildUI();
+            this._setupMenuItems();
+            this._updateContributionDisplay();
+
+            this._prefsChangedId = this._preferences.connectChanged(() => {
+                this._updateContributionDisplay();
+            });
+        }
+
+        _buildUI() {
+            const containerBox = new St.BoxLayout({
                 vertical: true,
                 x_expand: false,
                 y_expand: true,
                 y_align: Clutter.ActorAlign.CENTER
             });
 
-            let hbox = new St.BoxLayout({
+            const hbox = new St.BoxLayout({
                 x_expand: false,
                 y_expand: false,
                 y_align: Clutter.ActorAlign.CENTER
             });
 
             for (let i = 0; i < 7; i++) {
-                let boxContainer = new St.Widget({
+                const boxContainer = new St.Widget({
                     layout_manager: new Clutter.BinLayout(),
                     x_expand: false,
                     y_expand: false,
-                    height: this._BOX_SIZE,
-                    width: this._BOX_SIZE,
-                    style: `margin-right: ${this._BOX_MARGIN}px;`
+                    height: BOX_SIZE,
+                    width: BOX_SIZE,
+                    style: `margin-right: ${BOX_MARGIN}px;`
                 });
 
-                let box = new St.Widget({
+                const box = new St.Widget({
                     style_class: 'commit-box',
-                    height: this._BOX_SIZE,
-                    width: this._BOX_SIZE,
-                    style: this._getBoxStyle('#888888'),
-                    opacity: 50,
+                    height: BOX_SIZE,
+                    width: BOX_SIZE,
+                    style: this._getBoxStyle(COLORS.DEFAULT),
+                    opacity: DEFAULT_OPACITY,
                 });
 
                 boxContainer.add_child(box);
@@ -62,20 +90,16 @@ const Indicator = GObject.registerClass(
 
             containerBox.add_child(hbox);
             this.add_child(containerBox);
+        }
 
-            this._updateContributionDisplay();
-
-            this._prefsChangedId = this._preferences.connectChanged(() => {
+        _setupMenuItems() {
+            const refreshItem = new PopupMenu.PopupMenuItem(_('Refresh Now'));
+            refreshItem.connect('activate', () => {
                 this._updateContributionDisplay();
             });
+            this.menu.addMenuItem(refreshItem);
 
-            let item = new PopupMenu.PopupMenuItem(_('Refresh Now'));
-            item.connect('activate', () => {
-                this._updateContributionDisplay();
-            });
-            this.menu.addMenuItem(item);
-
-            let settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
+            const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             settingsItem.connect('activate', () => {
                 this._openPreferences();
             });
@@ -83,7 +107,7 @@ const Indicator = GObject.registerClass(
         }
 
         _getBoxStyle(bgColor) {
-            return `background-color: ${bgColor}; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px; border-radius: ${this._BORDER_RADIUS}px;`;
+            return `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
         }
 
         _openPreferences() {
@@ -91,17 +115,88 @@ const Indicator = GObject.registerClass(
                 Main.extensionManager.openExtensionPrefs('weekly-commits@funinkina.is-a.dev', '', {});
             } catch (e) {
                 console.error('Failed to open preferences:', e);
-                Main.notify(_('Error'), _('Failed to open extension preferences.'));
+                Main.notify(_('Error'), _(MESSAGES.PREFS_ERROR));
             }
+        }
+
+        _getDatesForLastWeek() {
+            const dates = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date);
+            }
+            return dates;
+        }
+
+        _formatDateWithCommits(date, count) {
+            const monthName = date.toLocaleString('en-US', DATE_FORMAT);
+            const day = date.getDate();
+            const commitText = count === 1 ? 'commit' : 'commits';
+            return {
+                label: `${monthName} ${day}: ${count} ${commitText}`,
+                tooltip: `${monthName} ${day}: ${count} ${commitText}`
+            };
+        }
+
+        _createCommitInfoSection(dates, counts) {
+            const commitSection = new PopupMenu.PopupMenuSection();
+
+            dates.forEach((date, index) => {
+                const count = counts[index];
+                const { label } = this._formatDateWithCommits(date, count);
+
+                const textItem = new St.Label({
+                    text: label,
+                    style_class: 'commit-text-item',
+                    x_align: Clutter.ActorAlign.START,
+                    y_align: Clutter.ActorAlign.CENTER
+                });
+
+                const itemBin = new St.BoxLayout({
+                    style_class: 'popup-menu-item',
+                    reactive: false,
+                    can_focus: false,
+                    track_hover: false,
+                    style: 'padding-top: 2px; padding-bottom: 2px;'
+                });
+
+                itemBin.add_child(textItem);
+                commitSection.box.add_child(itemBin);
+            });
+
+            return commitSection;
+        }
+
+        _updateBoxAppearance(box, count, date) {
+            const opacity = DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE);
+            box.opacity = opacity;
+
+            const color = count > 0 ? COLORS.ACTIVE : COLORS.INACTIVE;
+            box.style = this._getBoxStyle(color);
+
+            if (date) {
+                const { tooltip } = this._formatDateWithCommits(date, count);
+                box.set_hover(true);
+                box.tooltip_text = tooltip;
+            }
+        }
+
+        _addSeparator() {
+            if (this._separator) {
+                this._separator.destroy();
+            }
+
+            this._separator = new PopupMenu.PopupSeparatorMenuItem();
+            this.menu.addMenuItem(this._separator, 1);
         }
 
         async _updateContributionDisplay() {
             try {
-                const username = this._preferences.githubUsername;
-                const token = this._preferences.githubToken;
+                const { githubUsername: username, githubToken: token } = this._preferences;
 
                 if (!username || !token) {
-                    console.warn('Weekly Commits Extension: Missing GitHub username or token');
+                    console.warn(`Weekly Commits Extension: ${MESSAGES.MISSING_CREDENTIALS}`);
                     this._setDefaultBoxAppearance();
                     return;
                 }
@@ -109,76 +204,19 @@ const Indicator = GObject.registerClass(
                 const counts = await fetchWeeklyContributions(username, token);
 
                 if (counts && counts.length === 7) {
-                    // Generate dates for the last 7 days (today and 6 days before)
-                    const dates = [];
-                    for (let i = 6; i >= 0; i--) {
-                        const date = new Date();
-                        date.setDate(date.getDate() - i);
-                        dates.push(date);
-                    }
+                    const dates = this._getDatesForLastWeek();
 
-                    // Clear previous commit info menu items
                     this._clearCommitInfoItems();
 
-                    // Create a submenu section for commit info
-                    let commitSection = new PopupMenu.PopupMenuSection();
-
-                    // Add commit info for each day as plain text items
-                    dates.forEach((date, index) => {
-                        const count = counts[index];
-                        const monthName = date.toLocaleString('en-US', { month: 'short' });
-                        const day = date.getDate();
-                        const commitText = count === 1 ? 'commit' : 'commits';
-                        const label = `${monthName} ${day}: ${count} ${commitText}`;
-
-                        // Create a plain text item instead of a PopupMenuItem
-                        let textItem = new St.Label({
-                            text: label,
-                            style_class: 'commit-text-item',
-                            x_align: Clutter.ActorAlign.START,
-                            y_align: Clutter.ActorAlign.CENTER
-                        });
-
-                        // Create an item bin to hold our text
-                        let itemBin = new St.BoxLayout({
-                            style_class: 'popup-menu-item',
-                            reactive: false,
-                            can_focus: false,
-                            track_hover: false,
-                            style: 'padding-top: 6px; padding-bottom: 6px;'
-                        });
-
-                        itemBin.add_child(textItem);
-
-                        // Add the item to the section
-                        commitSection.box.add_child(itemBin);
-                    });
-
-                    // Add the section to the menu at the top
+                    const commitSection = this._createCommitInfoSection(dates, counts);
                     this.menu.addMenuItem(commitSection, 0);
                     this._commitSection = commitSection;
 
-                    // Update the box appearances
+                    this._addSeparator();
+
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
-                            const box = this._boxes[index];
-                            box.opacity = 50 + Math.min(count * 20, 205);
-
-                            if (count > 0) {
-                                box.style = this._getBoxStyle('#4CAF50');
-                            } else {
-                                box.style = this._getBoxStyle('#8e8e8e');
-                            }
-
-                            // Keep the tooltips too
-                            const date = dates[index];
-                            const monthName = date.toLocaleString('en-US', { month: 'short' });
-                            const day = date.getDate();
-                            const commitText = count === 1 ? 'commit' : 'commits';
-                            const tooltip = `${monthName} ${day}: ${count} ${commitText}`;
-
-                            box.set_hover(true);
-                            box.tooltip_text = tooltip;
+                            this._updateBoxAppearance(this._boxes[index], count, dates[index]);
                         }
                     });
                 } else {
@@ -190,6 +228,10 @@ const Indicator = GObject.registerClass(
                 this._setDefaultBoxAppearance();
             }
 
+            this._scheduleNextRefresh();
+        }
+
+        _scheduleNextRefresh() {
             if (this._refreshTimeoutId) {
                 GLib.Source.remove(this._refreshTimeoutId);
             }
@@ -206,27 +248,33 @@ const Indicator = GObject.registerClass(
         }
 
         _clearCommitInfoItems() {
-            // Remove previous commit info section if it exists
             if (this._commitSection) {
                 this._commitSection.destroy();
                 this._commitSection = null;
+            }
+
+            if (this._separator) {
+                this._separator.destroy();
+                this._separator = null;
             }
         }
 
         _setDefaultBoxAppearance() {
             this._boxes.forEach(box => {
-                box.opacity = 50;
-                box.style = this._getBoxStyle('#888888');
-                box.tooltip_text = 'No data available';
+                box.opacity = DEFAULT_OPACITY;
+                box.style = this._getBoxStyle(COLORS.DEFAULT);
+                box.tooltip_text = MESSAGES.NO_DATA;
             });
 
-            // Clear and add a default message to the menu
             this._clearCommitInfoItems();
-            let commitSection = new PopupMenu.PopupMenuSection();
-            let item = new PopupMenu.PopupMenuItem('No commit data available');
+
+            const commitSection = new PopupMenu.PopupMenuSection();
+            const item = new PopupMenu.PopupMenuItem(MESSAGES.NO_COMMITS);
             commitSection.addMenuItem(item);
             this.menu.addMenuItem(commitSection, 0);
             this._commitSection = commitSection;
+
+            this._addSeparator();
         }
 
         destroy() {
@@ -239,6 +287,8 @@ const Indicator = GObject.registerClass(
                 this._preferences.disconnectChanged(this._prefsChangedId);
                 this._prefsChangedId = null;
             }
+
+            this._clearCommitInfoItems();
 
             super.destroy();
         }
