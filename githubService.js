@@ -7,10 +7,14 @@ export function getLast7DaysISO() {
     for (let i = 6; i >= 0; i--) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
-        dates.push(d.toISOString().split('T')[0]);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dates.push(`${year}-${month}-${day}`);
     }
     return dates;
 }
+
 
 /**
  * @param {string} username
@@ -24,8 +28,8 @@ export async function fetchWeeklyContributions(username, token) {
     }
 
     const targetDates = getLast7DaysISO();
-    const queryFromDate = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString();
-    const queryToDate = new Date().toISOString();
+    const queryFromDate = new Date(new Date().setDate(new Date().getDate() - 8)).toISOString();
+    const queryToDate = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString();
 
     const query = `
     query {
