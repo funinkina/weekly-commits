@@ -1,8 +1,8 @@
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 import GLib from 'gi://GLib';
-import Soup from 'gi://Soup'; // For making HTTP requests
-import Clutter from 'gi://Clutter'; // Added for layout properties
+import Soup from 'gi://Soup';
+import Clutter from 'gi://Clutter';
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -99,8 +99,9 @@ const Indicator = GObject.registerClass(
             super._init(0.0, _('Weekly Commits'));
 
             this._boxes = [];
+            this._BOX_SIZE = 12;
+            this._BOX_MARGIN = 2;
 
-            // Create a container that centers content vertically
             let containerBox = new St.BoxLayout({
                 vertical: true,
                 x_expand: false,
@@ -108,7 +109,6 @@ const Indicator = GObject.registerClass(
                 y_align: Clutter.ActorAlign.CENTER
             });
 
-            // Create horizontal box for the commit boxes
             let hbox = new St.BoxLayout({
                 style_class: 'panel-status-menu-box weekly-commits-hbox',
                 x_expand: false,
@@ -116,26 +116,20 @@ const Indicator = GObject.registerClass(
                 y_align: Clutter.ActorAlign.CENTER
             });
 
-            // Define the box size explicitly
-            const BOX_SIZE = 10;
-            const BOX_MARGIN = 2;
-
             for (let i = 0; i < 7; i++) {
                 let boxContainer = new St.Widget({
                     layout_manager: new Clutter.BinLayout(),
                     x_expand: false,
                     y_expand: false,
-                    height: BOX_SIZE,
-                    width: BOX_SIZE,
-                    style: `margin-right: ${BOX_MARGIN}px;`
+                    height: this._BOX_SIZE,
+                    width: this._BOX_SIZE,
+                    style: `margin-right: ${this._BOX_MARGIN}px;`
                 });
 
                 let box = new St.Widget({
                     style_class: 'commit-box',
-                    height: BOX_SIZE,
-                    width: BOX_SIZE,
-                    x_expand: false,
-                    y_expand: false,
+                    height: this._BOX_SIZE,
+                    width: this._BOX_SIZE,
                     style: 'background-color: #888888;',
                     opacity: 50,
                 });
@@ -171,20 +165,17 @@ const Indicator = GObject.registerClass(
         async _updateContributionDisplay() {
             try {
                 const counts = await _fetchWeeklyContributions(GITHUB_USERNAME, GITHUB_TOKEN);
-                const BOX_SIZE = 10;
 
                 if (counts && counts.length === 7) {
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
                             const box = this._boxes[index];
-                            // Opacity: 0 commits -> 50, 1 commit -> 70, ..., 10+ commits -> 255
                             box.opacity = 50 + Math.min(count * 20, 205);
 
-                            // Color: Green for commits, darker grey for no commits
                             if (count > 0) {
-                                box.style = `background-color: #4CAF50; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px;`;
+                                box.style = `background-color: #4CAF50; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px;`;
                             } else {
-                                box.style = `background-color: #8e8e8e; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px;`;
+                                box.style = `background-color: #8e8e8e; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px;`;
                             }
                         }
                     });
@@ -199,10 +190,9 @@ const Indicator = GObject.registerClass(
         }
 
         _setDefaultBoxAppearance() {
-            const BOX_SIZE = 5;
             this._boxes.forEach(box => {
                 box.opacity = 50;
-                box.style = `background-color: #888888; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px;`;
+                box.style = `background-color: #888888; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px;`;
             });
         }
 
