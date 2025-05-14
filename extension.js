@@ -160,11 +160,23 @@ const Indicator = GObject.registerClass(
 export default class WeeklyCommitsExtension extends Extension {
     enable() {
         this._preferences = new Preferences(this);
-        this._indicator = new Indicator(this._preferences);
-        Main.panel.addToStatusArea(this.uuid, this._indicator);
+
+        this._enableTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
+            if (this._preferences) {
+                this._indicator = new Indicator(this._preferences);
+                Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
+            }
+            this._enableTimeoutId = null;
+            return GLib.SOURCE_REMOVE;
+        });
     }
 
     disable() {
+        if (this._enableTimeoutId) {
+            GLib.Source.remove(this._enableTimeoutId);
+            this._enableTimeoutId = null;
+        }
+
         if (this._indicator) {
             this._indicator.destroy();
             this._indicator = null;
