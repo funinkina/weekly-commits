@@ -109,6 +109,56 @@ const Indicator = GObject.registerClass(
                 const counts = await fetchWeeklyContributions(username, token);
 
                 if (counts && counts.length === 7) {
+                    // Generate dates for the last 7 days (today and 6 days before)
+                    const dates = [];
+                    for (let i = 6; i >= 0; i--) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        dates.push(date);
+                    }
+
+                    // Clear previous commit info menu items
+                    this._clearCommitInfoItems();
+
+                    // Create a submenu section for commit info
+                    let commitSection = new PopupMenu.PopupMenuSection();
+
+                    // Add commit info for each day as plain text items
+                    dates.forEach((date, index) => {
+                        const count = counts[index];
+                        const monthName = date.toLocaleString('en-US', { month: 'short' });
+                        const day = date.getDate();
+                        const commitText = count === 1 ? 'commit' : 'commits';
+                        const label = `${monthName} ${day}: ${count} ${commitText}`;
+
+                        // Create a plain text item instead of a PopupMenuItem
+                        let textItem = new St.Label({
+                            text: label,
+                            style_class: 'commit-text-item',
+                            x_align: Clutter.ActorAlign.START,
+                            y_align: Clutter.ActorAlign.CENTER
+                        });
+
+                        // Create an item bin to hold our text
+                        let itemBin = new St.BoxLayout({
+                            style_class: 'popup-menu-item',
+                            reactive: false,
+                            can_focus: false,
+                            track_hover: false,
+                            style: 'padding-top: 6px; padding-bottom: 6px;'
+                        });
+
+                        itemBin.add_child(textItem);
+
+                        // Add the item to the section
+                        commitSection.box.add_child(itemBin);
+                    });
+
+                    // Add the section to the menu at the top
+                    this.menu.addMenuItem(commitSection, 0);
+                    this._commitSection = commitSection;
+
+                    // Update the box appearances
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
                             const box = this._boxes[index];
@@ -119,6 +169,16 @@ const Indicator = GObject.registerClass(
                             } else {
                                 box.style = this._getBoxStyle('#8e8e8e');
                             }
+
+                            // Keep the tooltips too
+                            const date = dates[index];
+                            const monthName = date.toLocaleString('en-US', { month: 'short' });
+                            const day = date.getDate();
+                            const commitText = count === 1 ? 'commit' : 'commits';
+                            const tooltip = `${monthName} ${day}: ${count} ${commitText}`;
+
+                            box.set_hover(true);
+                            box.tooltip_text = tooltip;
                         }
                     });
                 } else {
@@ -145,11 +205,28 @@ const Indicator = GObject.registerClass(
             );
         }
 
+        _clearCommitInfoItems() {
+            // Remove previous commit info section if it exists
+            if (this._commitSection) {
+                this._commitSection.destroy();
+                this._commitSection = null;
+            }
+        }
+
         _setDefaultBoxAppearance() {
             this._boxes.forEach(box => {
                 box.opacity = 50;
                 box.style = this._getBoxStyle('#888888');
+                box.tooltip_text = 'No data available';
             });
+
+            // Clear and add a default message to the menu
+            this._clearCommitInfoItems();
+            let commitSection = new PopupMenu.PopupMenuSection();
+            let item = new PopupMenu.PopupMenuItem('No commit data available');
+            commitSection.addMenuItem(item);
+            this.menu.addMenuItem(commitSection, 0);
+            this._commitSection = commitSection;
         }
 
         destroy() {

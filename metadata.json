@@ -2,11 +2,14 @@
   "name": "Weekly Commits",
   "description": "See your weekly GitHub commits in top bar",
   "uuid": "weekly-commits@funinkina.is-a.dev",
+  "author": "Aryan Kushwaha <aryankushwaha3101@gmail.com>",
+  "license": "MIT",
   "shell-version": [
     "46",
     "47",
     "48"
   ],
   "version": 1,
-  "url": "https://github.com/funinkina/weekly-commits"
+  "url": "https://github.com/funinkina/weekly-commits",
+  "settings-schema": "org.gnome.shell.extensions.weekly-commits"
 }
