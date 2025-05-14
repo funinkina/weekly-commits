@@ -33,7 +33,7 @@ And put your GitHub username and PAT in the extension's settings.
 ## TODO
 - [x] Add a settings page to configure the GitHub username and PAT.
 - [ ] Enable the extension to work with multiple GitHub accounts.
-- [ ] Make it fetch the commits at some interval (e.g. every hour).
+- [x] Make it fetch the commits at some interval (e.g. every hour).
 - [ ] Let users configure the placement in the top bar.
 - [ ] Customisable commit thresholds.
 - [ ] Add a tooltip with the number of commits and the date range.
