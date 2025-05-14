@@ -22,6 +22,7 @@ const Indicator = GObject.registerClass(
             this._BOX_SIZE = 14;
             this._BOX_MARGIN = 4;
             this._BORDER_RADIUS = 3;
+            this._refreshTimeoutId = null;
 
             let containerBox = new St.BoxLayout({
                 vertical: true,
@@ -63,11 +64,6 @@ const Indicator = GObject.registerClass(
             this.add_child(containerBox);
 
             this._updateContributionDisplay();
-
-            this._refreshTimeoutId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 3600, () => {
-                this._updateContributionDisplay();
-                return GLib.SOURCE_CONTINUE;
-            });
 
             this._prefsChangedId = this._preferences.connectChanged(() => {
                 this._updateContributionDisplay();
@@ -133,6 +129,20 @@ const Indicator = GObject.registerClass(
                 console.error(`Weekly Commits Extension: Error updating display - ${e.message}`);
                 this._setDefaultBoxAppearance();
             }
+
+            if (this._refreshTimeoutId) {
+                GLib.Source.remove(this._refreshTimeoutId);
+            }
+
+            const interval = this._preferences.refreshInterval;
+            this._refreshTimeoutId = GLib.timeout_add_seconds(
+                GLib.PRIORITY_DEFAULT,
+                interval,
+                () => {
+                    this._updateContributionDisplay();
+                    return GLib.SOURCE_CONTINUE;
+                }
+            );
         }
 
         _setDefaultBoxAppearance() {

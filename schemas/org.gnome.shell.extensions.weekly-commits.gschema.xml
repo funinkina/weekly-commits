@@ -11,5 +11,10 @@
       <summary>GitHub Personal Access Token</summary>
       <description>Your GitHub Personal Access Token for API authentication.</description>
     </key>
+    <key name="refresh-interval" type="i">
+      <default>21600</default>
+      <summary>Refresh Interval</summary>
+      <description>Time in seconds between refreshing GitHub contribution data.</description>
+    </key>
   </schema>
 </schemalist>

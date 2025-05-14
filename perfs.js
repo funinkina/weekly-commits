@@ -47,6 +47,14 @@ export class Preferences {
         this._settings.set_string('github-token', value || '');
     }
 
+    get refreshInterval() {
+        return this._settings.get_int('refresh-interval');
+    }
+
+    set refreshInterval(value) {
+        this._settings.set_int('refresh-interval', value);
+    }
+
     connectChanged(callback) {
         return this._settings.connect('changed', callback);
     }

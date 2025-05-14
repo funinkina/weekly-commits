@@ -29,16 +29,48 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         });
         group.add(tokenRow);
 
+        const refreshGroup = new Adw.PreferencesGroup();
+        refreshGroup.set_title(_('Update Settings'));
+        page.add(refreshGroup);
+
+        const intervalRow = new Adw.ComboRow({
+            title: _('Refresh Interval'),
+            subtitle: _('How often to check for new contributions')
+        });
+
+        const intervals = [
+            { value: 900, label: _('15 minutes') },
+            { value: 1800, label: _('30 minutes') },
+            { value: 3600, label: _('1 hour') },
+            { value: 7200, label: _('2 hours') },
+            { value: 14400, label: _('4 hours') },
+            { value: 21600, label: _('6 hours') },
+            { value: 43200, label: _('12 hours') },
+            { value: 86400, label: _('24 hours') }
+        ];
+
+        const intervalModel = new Gtk.StringList();
+        intervals.forEach(interval => intervalModel.append(interval.label));
+        intervalRow.model = intervalModel;
+
+        const currentInterval = settings.get_int('refresh-interval');
+        let activeIndex = intervals.findIndex(interval => interval.value === currentInterval);
+        if (activeIndex === -1) activeIndex = 5;
+        intervalRow.selected = activeIndex;
+
+        refreshGroup.add(intervalRow);
+
         const saveButton = new Gtk.Button({
             label: _('Save'),
             halign: Gtk.Align.CENTER,
             margin_top: 12
         });
-        group.add(saveButton);
+        refreshGroup.add(saveButton);
 
         saveButton.connect('clicked', () => {
             settings.set_string('github-username', usernameRow.text);
             settings.set_string('github-token', tokenRow.text);
+            settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
             window.close();
         });
 
