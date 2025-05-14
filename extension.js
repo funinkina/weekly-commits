@@ -9,15 +9,15 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { fetchWeeklyContributions } from './githubService.js';
-
-const GITHUB_TOKEN = '***REMOVED***';
-const GITHUB_USERNAME = 'funinkina';
+import { Preferences } from './perfs.js';
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
-        _init() {
+        _init(preferences) {
             super._init(0.0, _('Weekly Commits'));
 
+            this._preferences = preferences;
+            this._prefsChangedId = null;
             this._boxes = [];
             this._BOX_SIZE = 14;
             this._BOX_MARGIN = 4;
@@ -69,6 +69,10 @@ const Indicator = GObject.registerClass(
                 return GLib.SOURCE_CONTINUE;
             });
 
+            this._prefsChangedId = this._preferences.connectChanged(() => {
+                this._updateContributionDisplay();
+            });
+
             let item = new PopupMenu.PopupMenuItem(_('Refresh Now'));
             item.connect('activate', () => {
                 this._updateContributionDisplay();
@@ -77,7 +81,7 @@ const Indicator = GObject.registerClass(
 
             let settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             settingsItem.connect('activate', () => {
-                Main.notify(_('Settings'), _('Configure GitHub username and token in extension preferences.'));
+                this._openPreferences();
             });
             this.menu.addMenuItem(settingsItem);
         }
@@ -86,9 +90,27 @@ const Indicator = GObject.registerClass(
             return `background-color: ${bgColor}; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px; border-radius: ${this._BORDER_RADIUS}px;`;
         }
 
+        _openPreferences() {
+            try {
+                Main.extensionManager.openExtensionPrefs('weekly-commits@funinkina.is-a.dev', '', {});
+            } catch (e) {
+                console.error('Failed to open preferences:', e);
+                Main.notify(_('Error'), _('Failed to open extension preferences.'));
+            }
+        }
+
         async _updateContributionDisplay() {
             try {
-                const counts = await fetchWeeklyContributions(GITHUB_USERNAME, GITHUB_TOKEN);
+                const username = this._preferences.githubUsername;
+                const token = this._preferences.githubToken;
+
+                if (!username || !token) {
+                    console.warn('Weekly Commits Extension: Missing GitHub username or token');
+                    this._setDefaultBoxAppearance();
+                    return;
+                }
+
+                const counts = await fetchWeeklyContributions(username, token);
 
                 if (counts && counts.length === 7) {
                     counts.forEach((count, index) => {
@@ -125,13 +147,20 @@ const Indicator = GObject.registerClass(
                 GLib.Source.remove(this._refreshTimeoutId);
                 this._refreshTimeoutId = null;
             }
+
+            if (this._prefsChangedId) {
+                this._preferences.disconnectChanged(this._prefsChangedId);
+                this._prefsChangedId = null;
+            }
+
             super.destroy();
         }
     });
 
-export default class IndicatorExampleExtension extends Extension {
+export default class WeeklyCommitsExtension extends Extension {
     enable() {
-        this._indicator = new Indicator();
+        this._preferences = new Preferences(this);
+        this._indicator = new Indicator(this._preferences);
         Main.panel.addToStatusArea(this.uuid, this._indicator);
     }
 
@@ -140,5 +169,7 @@ export default class IndicatorExampleExtension extends Extension {
             this._indicator.destroy();
             this._indicator = null;
         }
+
+        this._preferences = null;
     }
 }

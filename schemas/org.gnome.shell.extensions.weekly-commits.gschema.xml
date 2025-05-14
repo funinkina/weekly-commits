@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.weekly-commits" path="/org/gnome/shell/extensions/weekly-commits/">
+    <key name="github-username" type="s">
+      <default>''</default>
+      <summary>GitHub Username</summary>
+      <description>Your GitHub username to fetch contribution data.</description>
+    </key>
+    <key name="github-token" type="s">
+      <default>''</default>
+      <summary>GitHub Personal Access Token</summary>
+      <description>Your GitHub Personal Access Token for API authentication.</description>
+    </key>
+  </schema>
+</schemalist>
