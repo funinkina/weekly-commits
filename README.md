@@ -1,9 +1,14 @@
 # Weekly Commits (GNOME extension)
-
 ## See your past weeks' GitHub contributions in the top bar
-> Make your top bar 42% cooler, one commit at a time.
+![GitHub](https://img.shields.io/github/license/funinkina/weekly-commits)
+![GitHub issues](https://img.shields.io/github/issues/funinkina/weekly-commits)
+![GitHub last commit](https://img.shields.io/github/last-commit/funinkina/weekly-commits)
+![GitHub stars](https://img.shields.io/github/stars/funinkina/weekly-commits)
 
-## Get this extension in GNOME Extensions
+
+![Screenshot](screenshot.png)
+
+## Get this extension on GNOME Extensions
 > [!NOTE]  
 > This extension is not yet available in the GNOME Extensions website. You can install it manually by following the instructions below.
 
@@ -32,10 +37,9 @@ And put your GitHub username and PAT in the extension's settings.
 
 ## TODO
 - [x] Add a settings page to configure the GitHub username and PAT.
-- [ ] Enable the extension to work with multiple GitHub accounts.
 - [x] Make it fetch the commits at some interval (e.g. every hour).
 - [ ] Let users configure the placement in the top bar.
-- [ ] Customisable commit thresholds.
+- [ ] Customisable commit view thresholds.
 - [ ] Add a tooltip with the number of commits and the date range.
 
 ## License
