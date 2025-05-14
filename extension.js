@@ -101,6 +101,7 @@ const Indicator = GObject.registerClass(
             this._boxes = [];
             this._BOX_SIZE = 12;
             this._BOX_MARGIN = 2;
+            this._BORDER_RADIUS = 2;
 
             let containerBox = new St.BoxLayout({
                 vertical: true,
@@ -130,7 +131,7 @@ const Indicator = GObject.registerClass(
                     style_class: 'commit-box',
                     height: this._BOX_SIZE,
                     width: this._BOX_SIZE,
-                    style: 'background-color: #888888;',
+                    style: this._getBoxStyle('#888888'),
                     opacity: 50,
                 });
 
@@ -162,6 +163,10 @@ const Indicator = GObject.registerClass(
             this.menu.addMenuItem(settingsItem);
         }
 
+        _getBoxStyle(bgColor) {
+            return `background-color: ${bgColor}; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px; border-radius: ${this._BORDER_RADIUS}px;`;
+        }
+
         async _updateContributionDisplay() {
             try {
                 const counts = await _fetchWeeklyContributions(GITHUB_USERNAME, GITHUB_TOKEN);
@@ -173,9 +178,9 @@ const Indicator = GObject.registerClass(
                             box.opacity = 50 + Math.min(count * 20, 205);
 
                             if (count > 0) {
-                                box.style = `background-color: #4CAF50; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px;`;
+                                box.style = this._getBoxStyle('#4CAF50');
                             } else {
-                                box.style = `background-color: #8e8e8e; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px;`;
+                                box.style = this._getBoxStyle('#8e8e8e');
                             }
                         }
                     });
@@ -192,7 +197,7 @@ const Indicator = GObject.registerClass(
         _setDefaultBoxAppearance() {
             this._boxes.forEach(box => {
                 box.opacity = 50;
-                box.style = `background-color: #888888; width: ${this._BOX_SIZE}px; height: ${this._BOX_SIZE}px;`;
+                box.style = this._getBoxStyle('#888888');
             });
         }
 
