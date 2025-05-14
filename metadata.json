@@ -1,0 +1,8 @@
+{
+  "name": "Weekly Commits",
+  "description": "See your weekly GitHub commits in top bar",
+  "uuid": "weekly-commits@funinkina.is-a.dev",
+  "shell-version": [
+    "48"
+  ]
+}
