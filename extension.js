@@ -99,9 +99,9 @@ const Indicator = GObject.registerClass(
             super._init(0.0, _('Weekly Commits'));
 
             this._boxes = [];
-            this._BOX_SIZE = 12;
-            this._BOX_MARGIN = 2;
-            this._BORDER_RADIUS = 2;
+            this._BOX_SIZE = 14;
+            this._BOX_MARGIN = 4;
+            this._BORDER_RADIUS = 3;
 
             let containerBox = new St.BoxLayout({
                 vertical: true,
@@ -111,7 +111,6 @@ const Indicator = GObject.registerClass(
             });
 
             let hbox = new St.BoxLayout({
-                style_class: 'panel-status-menu-box weekly-commits-hbox',
                 x_expand: false,
                 y_expand: false,
                 y_align: Clutter.ActorAlign.CENTER
