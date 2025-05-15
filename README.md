@@ -1,7 +1,7 @@
 <table>
    <tr>
       <td style="vertical-align: middle; width: 72px;">
-         <img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width="64">
+         <img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width="80">
       </td>
       <td style="vertical-align: middle;">
          <h1>Weekly Commits (GNOME extension)</h1>
@@ -17,9 +17,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/funinkina/weekly-commits)
 ![GitHub stars](https://img.shields.io/github/stars/funinkina/weekly-commits)
 
-## Get this extension on GNOME Extensions
-> [!NOTE]  
-> This extension is not yet available in the GNOME Extensions website. You can install it manually by following the instructions below.
+[![Get it on GNOME Extensions](https://github.com/andyholmes/gnome-shell-extensions-badge/raw/master/get-it-on-ego.png)](https://extensions.gnome.org/extension/8146/weekly-commits/)
 
 ## Installation
 1. Clone this repository:
