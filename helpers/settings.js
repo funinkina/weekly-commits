@@ -28,6 +28,22 @@ export class ExtensionSettings {
         this._settings.set_int('refresh-interval', value);
     }
 
+    get panelPosition() {
+        return this._settings.get_enum('panel-position');
+    }
+
+    set panelPosition(value) {
+        this._settings.set_enum('panel-position', value);
+    }
+
+    get panelIndex() {
+        return this._settings.get_int('panel-index');
+    }
+
+    set panelIndex(value) {
+        this._settings.set_int('panel-index', value);
+    }
+
     connectChanged(callback) {
         return this._settings.connect('changed', callback);
     }

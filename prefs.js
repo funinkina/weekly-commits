@@ -63,17 +63,58 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
 
         refreshGroup.add(intervalRow);
 
+        const positionGroup = new Adw.PreferencesGroup();
+        positionGroup.set_title(_('Panel Position'));
+        positionGroup.set_description(_('Customize the position of the extension in the panel'));
+        page.add(positionGroup);
+
+        const positionRow = new Adw.ComboRow({
+            title: _('Location'),
+            subtitle: _('Which section of the panel to use')
+        });
+
+        const positions = [
+            { value: 0, label: _('Left') },
+            { value: 1, label: _('Center') },
+            { value: 2, label: _('Right') }
+        ];
+
+        const positionModel = new Gtk.StringList();
+        positions.forEach(position => positionModel.append(position.label));
+        positionRow.model = positionModel;
+
+        const currentPosition = settings.get_enum('panel-position');
+        positionRow.selected = currentPosition;
+
+        positionGroup.add(positionRow);
+
+        const indexRow = new Adw.SpinRow({
+            title: _('Index'),
+            subtitle: _('Position within the chosen section (0 is leftmost)'),
+            adjustment: new Gtk.Adjustment({
+                lower: 0,
+                upper: 20,
+                step_increment: 1,
+                page_increment: 5,
+                value: settings.get_int('panel-index')
+            })
+        });
+
+        positionGroup.add(indexRow);
+        positionGroup.add(saveButton);
+
         const saveButton = new Gtk.Button({
             label: _('Save'),
             halign: Gtk.Align.CENTER,
             margin_top: 12
         });
-        refreshGroup.add(saveButton);
 
         saveButton.connect('clicked', () => {
             settings.set_string('github-username', usernameRow.text);
             settings.set_string('github-token', tokenRow.text);
             settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
+            settings.set_enum('panel-position', positionRow.selected);
+            settings.set_int('panel-index', indexRow.value);
             window.close();
         });
 
@@ -98,5 +139,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         });
         infoRow.add_suffix(linkButton);
         infoGroup.add(infoRow);
+
+        const actionGroup = new Adw.PreferencesGroup();
+        page.add(actionGroup);
     }
 }

@@ -306,20 +306,45 @@ export default class WeeklyCommitsExtension extends Extension {
     enable() {
         this._preferences = new ExtensionSettings(this);
 
+        this._positionChangedId = this._preferences._settings.connect('changed', (settings, key) => {
+            if (key === 'panel-position' || key === 'panel-index') {
+                this._updateIndicatorPosition();
+            }
+        });
+
         this._enableTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
             if (this._preferences) {
                 this._indicator = new Indicator(this._preferences, this);
-                Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
+                this._updateIndicatorPosition();
             }
             this._enableTimeoutId = null;
             return GLib.SOURCE_REMOVE;
         });
     }
 
+    _updateIndicatorPosition() {
+        if (!this._indicator) return;
+
+        this._indicator.destroy();
+
+        this._indicator = new Indicator(this._preferences, this);
+
+        const positions = ['left', 'center', 'right'];
+        const position = positions[this._preferences.panelPosition] || 'right';
+        const index = this._preferences.panelIndex || 0;
+
+        Main.panel.addToStatusArea(this.uuid, this._indicator, index, position);
+    }
+
     disable() {
         if (this._enableTimeoutId) {
             GLib.Source.remove(this._enableTimeoutId);
             this._enableTimeoutId = null;
+        }
+
+        if (this._positionChangedId) {
+            this._preferences._settings.disconnect(this._positionChangedId);
+            this._positionChangedId = null;
         }
 
         if (this._indicator) {

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+  <enum id="org.gnome.shell.extensions.weekly-commits.panel-position">
+    <value value="0" nick="left"/>
+    <value value="1" nick="center"/>
+    <value value="2" nick="right"/>
+  </enum>
+
   <schema id="org.gnome.shell.extensions.weekly-commits" path="/org/gnome/shell/extensions/weekly-commits/">
     <key name="github-username" type="s">
       <default>''</default>
@@ -15,6 +21,16 @@
       <default>21600</default>
       <summary>Refresh Interval</summary>
       <description>Time in seconds between refreshing GitHub contribution data.</description>
+    </key>
+    <key name="panel-position" enum="org.gnome.shell.extensions.weekly-commits.panel-position">
+      <default>'right'</default>
+      <summary>Panel Position</summary>
+      <description>The position of the extension indicator in the panel.</description>
+    </key>
+    <key name="panel-index" type="i">
+      <default>0</default>
+      <summary>Position Index</summary>
+      <description>The index position within the chosen panel section.</description>
     </key>
   </schema>
 </schemalist>
