@@ -19,6 +19,13 @@
 
 [![Get it on GNOME Extensions](https://github.com/andyholmes/gnome-shell-extensions-badge/raw/master/get-it-on-ego.png)](https://extensions.gnome.org/extension/8146/weekly-commits/)
 
+## Features
+- Displays the number of commits via seven boxes in the top bar.
+- Popup menu displays the number of commits each day.
+- GUI preferences menu to set GitHub credentials and other settings.
+- Auto update the data based on configurable intervals.
+- Set the position of the extension manually.
+
 ## Installation
 1. Clone this repository:
    ```bash
