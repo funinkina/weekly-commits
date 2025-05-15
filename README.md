@@ -1,12 +1,21 @@
-# Weekly Commits (GNOME extension)
-## See your past weeks' GitHub contributions in the top bar
+<table>
+   <tr>
+      <td style="vertical-align: middle; width: 72px;">
+         <img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width="64">
+      </td>
+      <td style="vertical-align: middle;">
+         <h1>Weekly Commits (GNOME extension)</h1>
+         <h3>See your past weeks' GitHub contributions in the top bar</h3>
+      </td>
+   </tr>
+</table>
+
+![Screenshot](screenshot.png)
+
 ![GitHub](https://img.shields.io/github/license/funinkina/weekly-commits)
 ![GitHub issues](https://img.shields.io/github/issues/funinkina/weekly-commits)
 ![GitHub last commit](https://img.shields.io/github/last-commit/funinkina/weekly-commits)
 ![GitHub stars](https://img.shields.io/github/stars/funinkina/weekly-commits)
-
-
-![Screenshot](screenshot.png)
 
 ## Get this extension on GNOME Extensions
 > [!NOTE]  

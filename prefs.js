@@ -2,6 +2,7 @@ import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import About from './about.js';
 
 export default class WeeklyCommitsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -11,6 +12,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         page.set_title(_('Settings'));
         page.set_icon_name('preferences-system-symbolic');
         window.add(page);
+        window.add(new About(this));
+        window.set_title(_('Weekly Commits Settings'));
 
         const group = new Adw.PreferencesGroup();
         group.set_title(_('GitHub Credentials'));
