@@ -200,6 +200,10 @@ const Indicator = GObject.registerClass(
 
         async _updateContributionDisplay() {
             try {
+                if (!this._boxes || !this._boxes.length) {
+                    return;
+                }
+
                 const { githubUsername: username, githubToken: token } = this._preferences;
 
                 if (!username || !token) {
@@ -209,6 +213,10 @@ const Indicator = GObject.registerClass(
                 }
 
                 const counts = await fetchContributions(username, token);
+
+                if (!this._boxes || !this._boxes.length) {
+                    return;
+                }
 
                 if (counts && counts.length === 7) {
                     const dates = this._getDatesForLastWeek();
@@ -226,7 +234,9 @@ const Indicator = GObject.registerClass(
                 }
             } catch (e) {
                 console.error(`Weekly Commits Extension: Error updating display - ${e.message}`);
-                this._setDefaultBoxAppearance();
+                if (this._boxes && this._boxes.length) {
+                    this._setDefaultBoxAppearance();
+                }
             }
 
             this._scheduleNextRefresh();
@@ -249,13 +259,25 @@ const Indicator = GObject.registerClass(
         }
 
         _clearCommitInfoItems() {
+            if (this._commitItems) {
+                this._commitItems = null;
+            }
+
             if (this._commitSection) {
-                this._commitSection.destroy();
+                try {
+                    this._commitSection.destroy();
+                } catch (e) {
+                    console.log('Error destroying commit section:', e);
+                }
                 this._commitSection = null;
             }
 
             if (this._separator) {
-                this._separator.destroy();
+                try {
+                    this._separator.destroy();
+                } catch (e) {
+                    console.log('Error destroying separator:', e);
+                }
                 this._separator = null;
             }
         }
@@ -325,15 +347,16 @@ export default class WeeklyCommitsExtension extends Extension {
     _updateIndicatorPosition() {
         if (!this._indicator) return;
 
-        this._indicator.destroy();
-
-        this._indicator = new Indicator(this._preferences, this);
-
-        const positions = ['left', 'center', 'right'];
-        const position = positions[this._preferences.panelPosition] || 'right';
+        const position = ['left', 'center', 'right'][this._preferences.panelPosition] || 'right';
         const index = this._preferences.panelIndex || 0;
 
-        Main.panel.addToStatusArea(this.uuid, this._indicator, index, position);
+        this._indicator.destroy();
+        this._indicator = null;
+
+        if (this._preferences) {
+            this._indicator = new Indicator(this._preferences, this);
+            Main.panel.addToStatusArea(this.uuid, this._indicator, index, position);
+        }
     }
 
     disable() {

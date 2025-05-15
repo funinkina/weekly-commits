@@ -11,14 +11,10 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage();
         page.set_title(_('Settings'));
         page.set_icon_name('preferences-system-symbolic');
-        window.add(page);
-        window.add(new About(this));
-        window.set_title(_('Weekly Commits Settings'));
 
         const group = new Adw.PreferencesGroup();
         group.set_title(_('GitHub Credentials'));
         group.set_description(_('Enter your GitHub username and personal access token'));
-        page.add(group);
 
         const usernameRow = new Adw.EntryRow({
             title: _('GitHub Username'),
@@ -33,12 +29,11 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         group.add(tokenRow);
 
         const refreshGroup = new Adw.PreferencesGroup();
-        refreshGroup.set_title(_('Update Settings'));
-        page.add(refreshGroup);
+        refreshGroup.set_title(_('Auto Update Settings'));
 
         const intervalRow = new Adw.ComboRow({
             title: _('Refresh Interval'),
-            subtitle: _('How often to check for new contributions')
+            subtitle: _('How often to check for new contributions?')
         });
 
         const intervals = [
@@ -66,7 +61,6 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         const positionGroup = new Adw.PreferencesGroup();
         positionGroup.set_title(_('Panel Position'));
         positionGroup.set_description(_('Customize the position of the extension in the panel'));
-        page.add(positionGroup);
 
         const positionRow = new Adw.ComboRow({
             title: _('Location'),
@@ -101,32 +95,29 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         });
 
         positionGroup.add(indexRow);
-        positionGroup.add(saveButton);
 
+        const saveActionGroup = new Adw.PreferencesGroup();
         const saveButton = new Gtk.Button({
             label: _('Save'),
+            css_classes: ['suggested-action'],
             halign: Gtk.Align.CENTER,
-            margin_top: 12
+            margin_top: 12,
+            margin_bottom: 12
         });
+        saveActionGroup.add(saveButton);
 
-        saveButton.connect('clicked', () => {
-            settings.set_string('github-username', usernameRow.text);
-            settings.set_string('github-token', tokenRow.text);
-            settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
-            settings.set_enum('panel-position', positionRow.selected);
-            settings.set_int('panel-index', indexRow.value);
-            window.close();
-        });
+        page.add(group);
+        page.add(refreshGroup);
+        page.add(positionGroup);
+        page.add(saveActionGroup);
 
         const spacerGroup = new Adw.PreferencesGroup();
-        page.add(spacerGroup);
-
         spacerGroup.set_vexpand(true);
+        page.add(spacerGroup);
 
         const infoGroup = new Adw.PreferencesGroup();
         infoGroup.set_vexpand(false);
         infoGroup.set_valign(Gtk.Align.END);
-        page.add(infoGroup);
 
         const infoRow = new Adw.ActionRow({
             title: _('About Personal Access Tokens'),
@@ -140,7 +131,19 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         infoRow.add_suffix(linkButton);
         infoGroup.add(infoRow);
 
-        const actionGroup = new Adw.PreferencesGroup();
-        page.add(actionGroup);
+        page.add(infoGroup);
+
+        window.add(page);
+        window.add(new About(this));
+        window.set_title(_('Weekly Commits Settings'));
+        window.set_default_size(650, 750);
+
+        saveButton.connect('clicked', () => {
+            settings.set_string('github-username', usernameRow.text);
+            settings.set_string('github-token', tokenRow.text);
+            settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
+            settings.set_enum('panel-position', positionRow.selected);
+            settings.set_int('panel-index', indexRow.value);
+        });
     }
 }
