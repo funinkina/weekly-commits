@@ -21,7 +21,7 @@ export function getLast7DaysISO() {
  * @param {string} token
  * @returns {Promise<number[]>} 
  */
-export async function fetchWeeklyContributions(username, token) {
+export async function fetchContributions(username, token) {
     if (!token || token === 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN' || !username || username === 'YOUR_GITHUB_USERNAME') {
         console.error('Weekly Commits Extension: GitHub token or username is not configured.');
         return Array(7).fill(0);

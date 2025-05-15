@@ -2,7 +2,7 @@ import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
-import About from './about.js';
+import About from './helpers/about.js';
 
 export default class WeeklyCommitsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {

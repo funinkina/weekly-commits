@@ -8,8 +8,8 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { fetchWeeklyContributions } from './githubService.js';
-import { Preferences } from './perfs.js';
+import { fetchContributions } from './helpers/githubService.js';
+import { ExtensionSettings } from './helpers/settings.js';
 
 const BOX_SIZE = 14;
 const BOX_MARGIN = 4;
@@ -32,10 +32,11 @@ const OPACITY_PER_COMMIT = 20;
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
-        _init(preferences) {
+        _init(preferences, extension) {
             super._init(0.0, _('Weekly Commits'));
 
             this._preferences = preferences;
+            this._extension = extension;
             this._prefsChangedId = null;
             this._boxes = [];
             this._refreshTimeoutId = null;
@@ -112,7 +113,7 @@ const Indicator = GObject.registerClass(
 
         _openPreferences() {
             try {
-                Main.extensionManager.openExtensionPrefs('weekly-commits@funinkina.is-a.dev', '', {});
+                this._extension.openPreferences();
             } catch (e) {
                 console.error('Failed to open preferences:', e);
                 Main.notify(_('Error'), _(MESSAGES.PREFS_ERROR));
@@ -207,7 +208,7 @@ const Indicator = GObject.registerClass(
                     return;
                 }
 
-                const counts = await fetchWeeklyContributions(username, token);
+                const counts = await fetchContributions(username, token);
 
                 if (counts && counts.length === 7) {
                     const dates = this._getDatesForLastWeek();
@@ -303,11 +304,11 @@ const Indicator = GObject.registerClass(
 
 export default class WeeklyCommitsExtension extends Extension {
     enable() {
-        this._preferences = new Preferences(this);
+        this._preferences = new ExtensionSettings(this);
 
         this._enableTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
             if (this._preferences) {
-                this._indicator = new Indicator(this._preferences);
+                this._indicator = new Indicator(this._preferences, this);
                 Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
             }
             this._enableTimeoutId = null;
