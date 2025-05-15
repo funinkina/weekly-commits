@@ -139,33 +139,48 @@ const Indicator = GObject.registerClass(
             };
         }
 
-        _createCommitInfoSection(dates, counts) {
-            const commitSection = new PopupMenu.PopupMenuSection();
+        _updateCommitInfoSection(dates, counts) {
+            if (!this._commitSection) {
+                this._commitSection = new PopupMenu.PopupMenuSection();
+                this.menu.addMenuItem(this._commitSection, 0);
+
+                this._commitItems = [];
+
+                for (let i = 0; i < 7; i++) {
+                    const textItem = new St.Label({
+                        text: '',
+                        style_class: 'commit-text-item',
+                        x_align: Clutter.ActorAlign.START,
+                        y_align: Clutter.ActorAlign.CENTER
+                    });
+
+                    const itemBin = new St.BoxLayout({
+                        style_class: 'popup-menu-item',
+                        reactive: false,
+                        can_focus: false,
+                        track_hover: false,
+                        style: 'padding-top: 2px; padding-bottom: 2px;'
+                    });
+
+                    itemBin.add_child(textItem);
+                    this._commitSection.box.add_child(itemBin);
+                    this._commitItems.push({ bin: itemBin, label: textItem });
+                }
+
+                if (!this._separator) {
+                    this._separator = new PopupMenu.PopupSeparatorMenuItem();
+                    this.menu.addMenuItem(this._separator, 1);
+                }
+            }
 
             dates.forEach((date, index) => {
                 const count = counts[index];
                 const { label } = this._formatDateWithCommits(date, count);
 
-                const textItem = new St.Label({
-                    text: label,
-                    style_class: 'commit-text-item',
-                    x_align: Clutter.ActorAlign.START,
-                    y_align: Clutter.ActorAlign.CENTER
-                });
-
-                const itemBin = new St.BoxLayout({
-                    style_class: 'popup-menu-item',
-                    reactive: false,
-                    can_focus: false,
-                    track_hover: false,
-                    style: 'padding-top: 2px; padding-bottom: 2px;'
-                });
-
-                itemBin.add_child(textItem);
-                commitSection.box.add_child(itemBin);
+                if (this._commitItems[index]) {
+                    this._commitItems[index].label.text = label;
+                }
             });
-
-            return commitSection;
         }
 
         _updateBoxAppearance(box, count, date) {
@@ -180,15 +195,6 @@ const Indicator = GObject.registerClass(
                 box.set_hover(true);
                 box.tooltip_text = tooltip;
             }
-        }
-
-        _addSeparator() {
-            if (this._separator) {
-                this._separator.destroy();
-            }
-
-            this._separator = new PopupMenu.PopupSeparatorMenuItem();
-            this.menu.addMenuItem(this._separator, 1);
         }
 
         async _updateContributionDisplay() {
@@ -206,13 +212,7 @@ const Indicator = GObject.registerClass(
                 if (counts && counts.length === 7) {
                     const dates = this._getDatesForLastWeek();
 
-                    this._clearCommitInfoItems();
-
-                    const commitSection = this._createCommitInfoSection(dates, counts);
-                    this.menu.addMenuItem(commitSection, 0);
-                    this._commitSection = commitSection;
-
-                    this._addSeparator();
+                    this._updateCommitInfoSection(dates, counts);
 
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
@@ -278,6 +278,10 @@ const Indicator = GObject.registerClass(
         }
 
         destroy() {
+            this._boxes.forEach(box => {
+                box.remove_all_transitions();
+            });
+
             if (this._refreshTimeoutId) {
                 GLib.Source.remove(this._refreshTimeoutId);
                 this._refreshTimeoutId = null;
@@ -289,6 +293,9 @@ const Indicator = GObject.registerClass(
             }
 
             this._clearCommitInfoItems();
+            this._boxes = null;
+            this._cache = null;
+            this._commitItems = null;
 
             super.destroy();
         }
