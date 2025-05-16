@@ -133,13 +133,24 @@ const Indicator = GObject.registerClass(
         }
 
         _formatDateWithCommits(date, count) {
-            const monthName = date.toLocaleString('en-US', DATE_FORMAT);
-            const day = date.getDate();
+            const today = new Date();
+            const isToday = date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+
             const commitText = count === 1 ? 'commit' : 'commits';
-            return {
-                label: `${monthName} ${day}: ${count} ${commitText}`,
-                tooltip: `${monthName} ${day}: ${count} ${commitText}`
-            };
+
+            if (isToday) {
+                return {
+                    label: `Today: ${count} ${commitText}`,
+                };
+            } else {
+                const monthName = date.toLocaleString('en-US', DATE_FORMAT);
+                const day = date.getDate();
+                return {
+                    label: `${monthName} ${day}: ${count} ${commitText}`,
+                };
+            }
         }
 
         _updateCommitInfoSection(dates, counts) {
@@ -154,7 +165,8 @@ const Indicator = GObject.registerClass(
                         text: '',
                         style_class: 'commit-text-item',
                         x_align: Clutter.ActorAlign.START,
-                        y_align: Clutter.ActorAlign.CENTER
+                        y_align: Clutter.ActorAlign.CENTER,
+                        style: 'font-family: monospace;'
                     });
 
                     const itemBin = new St.BoxLayout({
@@ -188,18 +200,12 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _updateBoxAppearance(box, count, date) {
+        _updateBoxAppearance(box, count) {
             const opacity = DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE);
             box.opacity = opacity;
 
             const color = count > 0 ? COLORS.ACTIVE : COLORS.INACTIVE;
             box.style = this._getBoxStyle(color);
-
-            if (date) {
-                const { tooltip } = this._formatDateWithCommits(date, count);
-                box.set_hover(true);
-                box.tooltip_text = tooltip;
-            }
         }
 
         async _updateContributionDisplay() {
@@ -229,7 +235,7 @@ const Indicator = GObject.registerClass(
 
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
-                            this._updateBoxAppearance(this._boxes[index], count, dates[index]);
+                            this._updateBoxAppearance(this._boxes[index], count);
                         }
                     });
                 } else {
@@ -335,7 +341,7 @@ export default class WeeklyCommitsExtension extends Extension {
     enable() {
         this._preferences = new ExtensionSettings(this);
 
-        this._positionChangedId = this._preferences._settings.connect('changed', (settings, key) => {
+        this._positionChangedId = this._preferences._settings.connect('changed', (key) => {
             if (key === 'panel-position' || key === 'panel-index') {
                 this._updateIndicatorPosition();
             }
