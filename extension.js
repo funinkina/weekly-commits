@@ -174,14 +174,16 @@ const Indicator = GObject.registerClass(
                 }
             }
 
-            dates.forEach((date, index) => {
-                const count = counts[index];
-                const { label } = this._formatDateWithCommits(date, count);
+            if (this._commitItems) {
+                dates.forEach((date, index) => {
+                    const count = counts[index];
+                    const { label } = this._formatDateWithCommits(date, count);
 
-                if (this._commitItems[index]) {
-                    this._commitItems[index].label.text = label;
-                }
-            });
+                    if (this._commitItems[index]) {
+                        this._commitItems[index].label.text = label;
+                    }
+                });
+            }
         }
 
         _updateBoxAppearance(box, count, date) {
@@ -260,7 +262,7 @@ const Indicator = GObject.registerClass(
 
         _clearCommitInfoItems() {
             if (this._commitItems) {
-                this._commitItems = null;
+                this._commitItems = [];
             }
 
             if (this._commitSection) {
@@ -297,7 +299,10 @@ const Indicator = GObject.registerClass(
             this.menu.addMenuItem(commitSection, 0);
             this._commitSection = commitSection;
 
-            this._addSeparator();
+            if (!this._separator) {
+                this._separator = new PopupMenu.PopupSeparatorMenuItem();
+                this.menu.addMenuItem(this._separator, 1);
+            }
         }
 
         destroy() {
@@ -378,3 +383,4 @@ export default class WeeklyCommitsExtension extends Extension {
         this._preferences = null;
     }
 }
+
