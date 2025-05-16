@@ -8,7 +8,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { fetchContributions } from './helpers/githubService.js';
+import { fetchContributions, getLast7Days } from './helpers/githubService.js';
 import { ExtensionSettings } from './helpers/settings.js';
 
 const BOX_SIZE = 14;
@@ -122,16 +122,6 @@ const Indicator = GObject.registerClass(
             return `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
         }
 
-        _getDatesForLastWeek() {
-            const dates = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                dates.push(date);
-            }
-            return dates;
-        }
-
         _formatDateWithCommits(date, count) {
             const today = new Date();
             const isToday = date.getDate() === today.getDate() &&
@@ -229,7 +219,7 @@ const Indicator = GObject.registerClass(
                 }
 
                 if (counts && counts.length === 7) {
-                    const dates = this._getDatesForLastWeek();
+                    const dates = getLast7Days(false);
 
                     this._updateCommitInfoSection(dates, counts);
 
