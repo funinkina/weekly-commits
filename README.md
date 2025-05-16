@@ -1,14 +1,6 @@
-<table>
-   <tr>
-      <td style="vertical-align: middle; width: 72px;">
-         <img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width="80">
-      </td>
-      <td style="vertical-align: middle;">
-         <h1>Weekly Commits (GNOME extension)</h1>
-         <h3>See your past weeks' GitHub contributions in the top bar</h3>
-      </td>
-   </tr>
-</table>
+<img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width=80 align="left" />
+<h1>Weekly Commits (GNOME extension)</h1>
+<h3>See your past weeks' GitHub contributions in the top bar</h3>
 
 ![Screenshot](screenshot.png)
 

@@ -35,6 +35,8 @@ const Indicator = GObject.registerClass(
         _init(preferences, extension) {
             super._init(0.0, _('Weekly Commits'));
 
+            this.menu.setSourceAlignment(0);
+
             this._preferences = preferences;
             this._extension = extension;
             this._prefsChangedId = null;
@@ -102,9 +104,7 @@ const Indicator = GObject.registerClass(
 
             const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             settingsItem.connect('activate', () => {
-                this._openPreferences().catch(e => {
-                    console.error('Error in openPreferences:', e);
-                });
+                this._openPreferences()
             });
             this.menu.addMenuItem(settingsItem);
         }
