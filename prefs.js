@@ -121,12 +121,12 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
 
         const infoRow = new Adw.ActionRow({
             title: _('About Personal Access Tokens'),
-            subtitle: _('Generate a token with "read:user" scope at GitHub Developer Settings')
+            subtitle: _('Generate a fine grained personal access token with "All Repositories" access.')
         });
 
         const linkButton = new Gtk.LinkButton({
             label: _('Open GitHub Token Settings'),
-            uri: 'https://github.com/settings/tokens'
+            uri: 'https://github.com/settings/personal-access-tokens/new'
         });
         infoRow.add_suffix(linkButton);
         infoGroup.add(infoRow);

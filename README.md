@@ -43,18 +43,17 @@
    ```
 
 ## Configuration
-To make the extension work, you need to set your GitHub username and a personal access token (PAT) with the `repo` scope. 
+To make the extension work, you need to set your GitHub `username` and a **Fine Grained Personal Access Token** (PAT) with Repository Acess to 'All repositories'. Get it from [here](https://github.com/settings/personal-access-tokens/new).
 
-You can create a PAT in your GitHub account settings under [Developer settings](https://github.com/settings/tokens).
-
-And put your GitHub username and PAT in the extension's settings. 
+And put your GitHub username and the token in the extension's settings. 
 
 ## TODO
 - [x] Add a settings page to configure the GitHub username and PAT.
 - [x] Make it fetch the commits at some interval (e.g. every hour).
 - [x] Let users configure the placement in the top bar.
+- [x] Add a popup with the number of commits on the day.
+- [ ] Add option for week start day (Monday or Sunday).
 - [ ] Customisable commit view thresholds.
-- [ ] Add a tooltip with the number of commits and the date range.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

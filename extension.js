@@ -102,22 +102,24 @@ const Indicator = GObject.registerClass(
 
             const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             settingsItem.connect('activate', () => {
-                this._openPreferences();
+                this._openPreferences().catch(e => {
+                    console.error('Error in openPreferences:', e);
+                });
             });
             this.menu.addMenuItem(settingsItem);
         }
 
-        _getBoxStyle(bgColor) {
-            return `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
-        }
-
-        _openPreferences() {
+        async _openPreferences() {
             try {
-                this._extension.openPreferences();
+                await this._extension.openPreferences();
             } catch (e) {
                 console.error('Failed to open preferences:', e);
                 Main.notify(_('Error'), _(MESSAGES.PREFS_ERROR));
             }
+        }
+
+        _getBoxStyle(bgColor) {
+            return `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
         }
 
         _getDatesForLastWeek() {
