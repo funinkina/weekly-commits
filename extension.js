@@ -98,7 +98,18 @@ const Indicator = GObject.registerClass(
         _setupMenuItems() {
             const refreshItem = new PopupMenu.PopupMenuItem(_('Refresh Now'));
             refreshItem.connect('activate', () => {
-                this._updateContributionDisplay();
+                refreshItem.label.text = _('Refreshing...');
+
+                this._clearCommitInfoItems();
+
+                this._updateContributionDisplay().finally(() => {
+                    refreshItem.label.text = _('Refresh Now');
+
+                    if (this.menu.isOpen) {
+                        this.menu.close();
+                        this.menu.open();
+                    }
+                });
             });
             this.menu.addMenuItem(refreshItem);
 
@@ -240,6 +251,7 @@ const Indicator = GObject.registerClass(
             }
 
             this._scheduleNextRefresh();
+            return Promise.resolve();
         }
 
         _scheduleNextRefresh() {
