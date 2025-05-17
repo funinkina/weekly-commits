@@ -115,6 +115,20 @@ export default class About extends Adw.PreferencesPage {
         moreInfo.add_prefix(blogIcon);
         authorGroup.add(moreInfo);
         this._makeRowClickable(moreInfo, authorBlogsLink);
+
+        const buyMeCoffeeLink = 'https://www.buymeacoffee.com/funinkina';
+        const coffeeRow = new Adw.ActionRow({
+            title: _('Buy Me a Coffee'),
+            subtitle: _('Support me if you like my work.'),
+            activatable: true
+        });
+
+        const coffeeIcon = new Gtk.Image({
+            icon_name: 'emblem-favorite-symbolic'
+        });
+        coffeeRow.add_prefix(coffeeIcon);
+        authorGroup.add(coffeeRow);
+        this._makeRowClickable(coffeeRow, buyMeCoffeeLink);
     }
 
     _makeRowClickable(row, link) {
