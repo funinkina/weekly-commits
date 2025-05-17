@@ -46,6 +46,7 @@ And put your GitHub username and the token in the extension's settings.
 - [x] Add a popup with the number of commits on the day.
 - [ ] Add option for week start day (Monday or Sunday).
 - [ ] Customisable commit view thresholds.
+- [ ] Add translations.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
