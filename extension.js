@@ -52,7 +52,6 @@ const Indicator = GObject.registerClass(
             this._prefsChangedId = this._preferences.connectChanged(() => {
                 this._clearCommitInfoItems();
                 this._updateContributionDisplay().finally(() => {
-                    // Force menu refresh if it's open
                     this._refreshMenu();
                 });
             });
@@ -355,7 +354,7 @@ export default class WeeklyCommitsExtension extends Extension {
     enable() {
         this._preferences = new ExtensionSettings(this);
 
-        this._positionChangedId = this._preferences._settings.connect('changed', (key) => {
+        this._positionChangedId = this._preferences._settings.connect('changed', (settings, key) => {
             if (key === 'panel-position' || key === 'panel-index') {
                 this._updateIndicatorPosition();
             }
