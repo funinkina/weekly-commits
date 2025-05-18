@@ -201,12 +201,19 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _updateBoxAppearance(box, count) {
-            const opacity = DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE);
-            box.opacity = opacity;
+        _setBoxAppearance(box, count = 0, tooltipText = null) {
+            const opacity = count > 0
+                ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
+                : DEFAULT_OPACITY;
 
             const color = count > 0 ? COLORS.ACTIVE : COLORS.INACTIVE;
+
+            box.opacity = opacity;
             box.style = this._getBoxStyle(color);
+
+            if (tooltipText) {
+                box.tooltip_text = tooltipText;
+            }
         }
 
         async _updateContributionDisplay() {
@@ -236,7 +243,7 @@ const Indicator = GObject.registerClass(
 
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
-                            this._updateBoxAppearance(this._boxes[index], count);
+                            this._setBoxAppearance(this._boxes[index], count);
                         }
                     });
                 } else {
@@ -296,9 +303,7 @@ const Indicator = GObject.registerClass(
 
         _setDefaultBoxAppearance() {
             this._boxes.forEach(box => {
-                box.opacity = DEFAULT_OPACITY;
-                box.style = this._getBoxStyle(COLORS.DEFAULT);
-                box.tooltip_text = MESSAGES.NO_DATA;
+                this._setBoxAppearance(box, 0, MESSAGES.NO_DATA);
             });
 
             this._clearCommitInfoItems();
