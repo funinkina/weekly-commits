@@ -50,3 +50,7 @@ And put your GitHub username and the token in the extension's settings.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+> [!NOTE]
+> #### Legal
+> This project is not affiliated with or endorsed by GitHub, Inc. or the GNOME Foundation. The use of the GitHub logo and name is for informational purposes only and does not imply any endorsement or affiliation with GitHub, Inc. The copyright for github.com is owned by GitHub, Inc. All other trademarks and copyrights are the property of their respective owners.

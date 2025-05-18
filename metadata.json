@@ -9,7 +9,10 @@
     "47",
     "48"
   ],
-  "version": 5,
   "url": "https://github.com/funinkina/weekly-commits",
-  "settings-schema": "org.gnome.shell.extensions.weekly-commits"
+  "settings-schema": "org.gnome.shell.extensions.weekly-commits",
+  "donation": {
+    "buymeacoffee": "https://www.buymeacoffee.com/funinkina",
+    "github": "https://github.com/sponsors/funinkina"
+  }
 }

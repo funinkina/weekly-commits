@@ -135,7 +135,7 @@ export default class About extends Adw.PreferencesPage {
         row.set_tooltip_text(link);
         row.connect('activated', () => {
             try {
-                Gio.AppInfo.launch_default_for_uri_async(link, null, null, (source, result) => {
+                Gio.AppInfo.launch_default_for_uri_async(link, null, null, (result) => {
                     try {
                         Gio.AppInfo.launch_default_for_uri_finish(result);
                     } catch (e) {

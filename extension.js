@@ -50,7 +50,11 @@ const Indicator = GObject.registerClass(
             this._updateContributionDisplay();
 
             this._prefsChangedId = this._preferences.connectChanged(() => {
-                this._updateContributionDisplay();
+                this._clearCommitInfoItems();
+                this._updateContributionDisplay().finally(() => {
+                    // Force menu refresh if it's open
+                    this._refreshMenu();
+                });
             });
         }
 
@@ -104,11 +108,7 @@ const Indicator = GObject.registerClass(
 
                 this._updateContributionDisplay().finally(() => {
                     refreshItem.label.text = _('Refresh Now');
-
-                    if (this.menu.isOpen) {
-                        this.menu.close();
-                        this.menu.open();
-                    }
+                    this._refreshMenu();
                 });
             });
             this.menu.addMenuItem(refreshItem);
@@ -312,6 +312,13 @@ const Indicator = GObject.registerClass(
             if (!this._separator) {
                 this._separator = new PopupMenu.PopupSeparatorMenuItem();
                 this.menu.addMenuItem(this._separator, 1);
+            }
+        }
+
+        _refreshMenu() {
+            if (this.menu.isOpen) {
+                this.menu.close();
+                this.menu.open();
             }
         }
 
