@@ -44,7 +44,7 @@ And put your GitHub username and the token in the extension's settings.
 - [x] Make it fetch the commits at some interval (e.g. every hour).
 - [x] Let users configure the placement in the top bar.
 - [x] Add a popup with the number of commits on the day.
-- [ ] Add option for week start day (Monday or Sunday).
+- [x] Add option for week start day (Monday or Sunday).
 - [ ] Customisable commit view thresholds.
 - [ ] Add translations.
 
