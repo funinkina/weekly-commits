@@ -8,7 +8,7 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { fetchContributions, getLast7Days } from './helpers/githubService.js';
+import { fetchContributions, getDates } from './helpers/githubService.js';
 import { ExtensionSettings } from './helpers/settings.js';
 
 const BOX_SIZE = 14;
@@ -221,7 +221,12 @@ const Indicator = GObject.registerClass(
                     return;
                 }
 
-                const { githubUsername: username, githubToken: token } = this._preferences;
+                const {
+                    githubUsername: username,
+                    githubToken: token,
+                    showCurrentWeekOnly,
+                    weekStartDay
+                } = this._preferences;
 
                 if (!username || !token) {
                     console.warn(`Weekly Commits Extension: ${MESSAGES.MISSING_CREDENTIALS}`);
@@ -229,14 +234,14 @@ const Indicator = GObject.registerClass(
                     return;
                 }
 
-                const counts = await fetchContributions(username, token);
+                const counts = await fetchContributions(username, token, showCurrentWeekOnly, weekStartDay);
 
                 if (!this._boxes || !this._boxes.length) {
                     return;
                 }
 
                 if (counts && counts.length === 7) {
-                    const dates = getLast7Days(false);
+                    const dates = getDates(false, showCurrentWeekOnly, weekStartDay);
 
                     this._updateCommitInfoSection(dates, counts);
 

@@ -44,6 +44,22 @@ export class ExtensionSettings {
         this._settings.set_int('panel-index', value);
     }
 
+    get showCurrentWeekOnly() {
+        return this._settings.get_boolean('show-current-week-only');
+    }
+
+    set showCurrentWeekOnly(value) {
+        this._settings.set_boolean('show-current-week-only', value);
+    }
+
+    get weekStartDay() {
+        return this._settings.get_enum('week-start-day');
+    }
+
+    set weekStartDay(value) {
+        this._settings.set_enum('week-start-day', value);
+    }
+
     connectChanged(callback) {
         return this._settings.connect('changed', callback);
     }

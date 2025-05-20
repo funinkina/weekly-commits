@@ -58,6 +58,44 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
 
         refreshGroup.add(intervalRow);
 
+        const displayGroup = new Adw.PreferencesGroup();
+        displayGroup.set_title(_('Display Settings'));
+        displayGroup.set_description(_('Configure how commit data is displayed'));
+
+        const showWeekOnlyRow = new Adw.SwitchRow({
+            title: _('Show current week\'s commits only'),
+            subtitle: _('Display commits for the current week instead of the last 7 days')
+        });
+        showWeekOnlyRow.set_active(settings.get_boolean('show-current-week-only'));
+        displayGroup.add(showWeekOnlyRow);
+
+        const weekStartRow = new Adw.ComboRow({
+            title: _('Week starts on'),
+            subtitle: _('Select which day the week begins')
+        });
+
+        const weekDays = [
+            _('Sunday'),
+            _('Monday'),
+            _('Tuesday'),
+            _('Wednesday'),
+            _('Thursday'),
+            _('Friday'),
+            _('Saturday')
+        ];
+
+        const weekDayModel = new Gtk.StringList();
+        weekDays.forEach(day => weekDayModel.append(day));
+        weekStartRow.model = weekDayModel;
+        weekStartRow.selected = settings.get_enum('week-start-day');
+
+        weekStartRow.set_sensitive(showWeekOnlyRow.get_active());
+        showWeekOnlyRow.connect('notify::active', () => {
+            weekStartRow.set_sensitive(showWeekOnlyRow.get_active());
+        });
+
+        displayGroup.add(weekStartRow);
+
         const positionGroup = new Adw.PreferencesGroup();
         positionGroup.set_title(_('Panel Position'));
         positionGroup.set_description(_('Customize the position of the extension in the panel'));
@@ -108,6 +146,7 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
 
         page.add(group);
         page.add(refreshGroup);
+        page.add(displayGroup);
         page.add(positionGroup);
         page.add(saveActionGroup);
 
@@ -142,6 +181,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             settings.set_string('github-username', usernameRow.text);
             settings.set_string('github-token', tokenRow.text);
             settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
+            settings.set_boolean('show-current-week-only', showWeekOnlyRow.get_active());
+            settings.set_enum('week-start-day', weekStartRow.selected);
             settings.set_enum('panel-position', positionRow.selected);
             settings.set_int('panel-index', indexRow.value);
         });

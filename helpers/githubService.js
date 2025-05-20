@@ -3,46 +3,74 @@ import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 
 /**
- * Get the dates for the last 7 days
+ * Get the dates for display based on settings
  * @param {boolean} asISOString - Whether to return dates as ISO strings or Date objects
+ * @param {boolean} showCurrentWeekOnly - Whether to show only the current week
+ * @param {number} weekStartDay - Day the week starts on (0 = Sunday, 1 = Monday, etc.)
  * @returns {(string[]|Date[])} Array of dates in the requested format
  */
-export function getLast7Days(asISOString = true) {
+export function getDates(asISOString = true, showCurrentWeekOnly = false, weekStartDay = 1) {
     const dates = [];
     const today = new Date();
 
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
+    if (showCurrentWeekOnly) {
+        const currentDay = today.getDay();
+        let daysToSubtract = currentDay - weekStartDay;
+        if (daysToSubtract < 0) daysToSubtract += 7;
 
-        if (asISOString) {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            dates.push(`${year}-${month}-${day}`);
-        } else {
-            dates.push(d);
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - daysToSubtract);
+
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(weekStart);
+            d.setDate(weekStart.getDate() + i);
+
+            if (asISOString) {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                dates.push(`${year}-${month}-${day}`);
+            } else {
+                dates.push(d);
+            }
+        }
+    } else {
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+
+            if (asISOString) {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                dates.push(`${year}-${month}-${day}`);
+            } else {
+                dates.push(d);
+            }
         }
     }
 
     return dates;
 }
 
-
 /**
  * @param {string} username
  * @param {string} token
+ * @param {boolean} showCurrentWeekOnly
+ * @param {number} weekStartDay
  * @returns {Promise<number[]>} 
  */
-export async function fetchContributions(username, token) {
+export async function fetchContributions(username, token, showCurrentWeekOnly = false, weekStartDay = 1) {
     if (!token || token === 'YOUR_GITHUB_PERSONAL_ACCESS_TOKEN' || !username || username === 'YOUR_GITHUB_USERNAME') {
         console.error('Weekly Commits Extension: GitHub token or username is not configured.');
         return Array(7).fill(0);
     }
 
-    const targetDates = getLast7Days(true);
-    const queryFromDate = new Date(new Date().setDate(new Date().getDate() - 8)).toISOString();
-    const queryToDate = new Date(new Date().setDate(new Date().getDate() + 1)).toISOString();
+    const targetDates = getDates(true, showCurrentWeekOnly, weekStartDay);
+
+    const queryFromDate = new Date(new Date().setDate(new Date().getDate() - 10)).toISOString();
+    const queryToDate = new Date(new Date().setDate(new Date().getDate() + 3)).toISOString();
+    console.log(`Weekly Commits Extension: Querying contributions from ${queryFromDate} to ${queryToDate}`);
 
     const query = `
     query {

@@ -6,6 +6,16 @@
     <value value="2" nick="right"/>
   </enum>
 
+  <enum id="org.gnome.shell.extensions.weekly-commits.week-start-day">
+    <value value="0" nick="sunday"/>
+    <value value="1" nick="monday"/>
+    <value value="2" nick="tuesday"/>
+    <value value="3" nick="wednesday"/>
+    <value value="4" nick="thursday"/>
+    <value value="5" nick="friday"/>
+    <value value="6" nick="saturday"/>
+  </enum>
+
   <schema id="org.gnome.shell.extensions.weekly-commits" path="/org/gnome/shell/extensions/weekly-commits/">
     <key name="github-username" type="s">
       <default>''</default>
@@ -31,6 +41,16 @@
       <default>0</default>
       <summary>Position Index</summary>
       <description>The index position within the chosen panel section.</description>
+    </key>
+    <key name="show-current-week-only" type="b">
+      <default>false</default>
+      <summary>Show Current Week's Commits Only</summary>
+      <description>Whether to show only commits from the current week instead of the last 7 days.</description>
+    </key>
+    <key name="week-start-day" enum="org.gnome.shell.extensions.weekly-commits.week-start-day">
+      <default>'monday'</default>
+      <summary>Week Start Day</summary>
+      <description>The day of the week on which the week starts.</description>
     </key>
   </schema>
 </schemalist>
