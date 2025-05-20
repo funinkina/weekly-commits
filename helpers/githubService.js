@@ -70,7 +70,6 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
 
     const queryFromDate = new Date(new Date().setDate(new Date().getDate() - 10)).toISOString();
     const queryToDate = new Date(new Date().setDate(new Date().getDate() + 3)).toISOString();
-    console.log(`Weekly Commits Extension: Querying contributions from ${queryFromDate} to ${queryToDate}`);
 
     const query = `
     query {

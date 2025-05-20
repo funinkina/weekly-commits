@@ -52,5 +52,10 @@
       <summary>Week Start Day</summary>
       <description>The day of the week on which the week starts.</description>
     </key>
+    <key name="highlight-current-day" type="b">
+      <default>false</default>
+      <summary>Highlight Current Day</summary>
+      <description>Adds a white border around the current day's box for easier identification.</description>
+    </key>
   </schema>
 </schemalist>

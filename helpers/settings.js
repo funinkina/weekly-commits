@@ -44,6 +44,14 @@ export class ExtensionSettings {
         this._settings.set_int('panel-index', value);
     }
 
+    get highlightCurrentDay() {
+        return this._settings.get_boolean('highlight-current-day');
+    }
+
+    set highlightCurrentDay(value) {
+        this._settings.set_boolean('highlight-current-day', value);
+    }
+
     get showCurrentWeekOnly() {
         return this._settings.get_boolean('show-current-week-only');
     }

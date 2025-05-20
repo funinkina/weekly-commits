@@ -200,21 +200,6 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _setBoxAppearance(box, count = 0, tooltipText = null) {
-            const opacity = count > 0
-                ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
-                : DEFAULT_OPACITY;
-
-            const color = count > 0 ? COLORS.ACTIVE : COLORS.INACTIVE;
-
-            box.opacity = opacity;
-            box.style = this._getBoxStyle(color);
-
-            if (tooltipText) {
-                box.tooltip_text = tooltipText;
-            }
-        }
-
         async _updateContributionDisplay() {
             try {
                 if (!this._boxes || !this._boxes.length) {
@@ -225,7 +210,8 @@ const Indicator = GObject.registerClass(
                     githubUsername: username,
                     githubToken: token,
                     showCurrentWeekOnly,
-                    weekStartDay
+                    weekStartDay,
+                    highlightCurrentDay
                 } = this._preferences;
 
                 if (!username || !token) {
@@ -247,7 +233,10 @@ const Indicator = GObject.registerClass(
 
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
-                            this._setBoxAppearance(this._boxes[index], count);
+                            const isToday = this._isToday(dates[index]);
+                            const shouldHighlight = highlightCurrentDay && isToday;
+
+                            this._setBoxAppearance(this._boxes[index], count, shouldHighlight);
                         }
                     });
                 } else {
@@ -263,6 +252,26 @@ const Indicator = GObject.registerClass(
 
             this._scheduleNextRefresh();
             return Promise.resolve();
+        }
+
+        _isToday(date) {
+            const today = new Date();
+            return date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+        }
+
+        _setBoxAppearance(box, count = 0, highlight = false) {
+            const opacity = count > 0
+                ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
+                : DEFAULT_OPACITY;
+
+            const color = count > 0 ? COLORS.ACTIVE : COLORS.INACTIVE;
+
+            const border = highlight ? '2px solid white' : 'none';
+
+            box.opacity = opacity;
+            box.style = `${this._getBoxStyle(color)} border: ${border};`;
         }
 
         _scheduleNextRefresh() {

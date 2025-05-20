@@ -62,6 +62,13 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         displayGroup.set_title(_('Display Settings'));
         displayGroup.set_description(_('Configure how commit data is displayed'));
 
+        const highlightCurrentDayRow = new Adw.SwitchRow({
+            title: _('Highlight current day'),
+            subtitle: _('Add a white border around the current day\'s box')
+        });
+        highlightCurrentDayRow.set_active(settings.get_boolean('highlight-current-day'));
+        displayGroup.add(highlightCurrentDayRow);
+
         const showWeekOnlyRow = new Adw.SwitchRow({
             title: _('Show current week\'s commits only'),
             subtitle: _('Display commits for the current week instead of the last 7 days')
@@ -181,6 +188,7 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             settings.set_string('github-username', usernameRow.text);
             settings.set_string('github-token', tokenRow.text);
             settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
+            settings.set_boolean('highlight-current-day', highlightCurrentDayRow.get_active());
             settings.set_boolean('show-current-week-only', showWeekOnlyRow.get_active());
             settings.set_enum('week-start-day', weekStartRow.selected);
             settings.set_enum('panel-position', positionRow.selected);
