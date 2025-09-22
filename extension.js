@@ -19,6 +19,161 @@ const COLORS = {
     INACTIVE: '#8e8e8e',
     DEFAULT: '#888888'
 };
+
+// Theme definitions
+const THEME_NAMES = {
+    standard: "GitHub",
+    classic: "GitHub Classic",
+    githubDark: "GitHub Dark",
+    halloween: "Halloween",
+    teal: "Teal",
+    leftPad: "@left_pad",
+    dracula: "Dracula",
+    blue: "Blue",
+    panda: "Panda 🐼",
+    sunny: "Sunny",
+    pink: "Pink",
+    YlGnBu: "YlGnBu",
+    solarizedDark: 'Solarized Dark',
+    solarizedLight: 'Solarized Light'
+};
+
+const THEMES = {
+    standard: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#216e39",
+        grade3: "#30a14e",
+        grade2: "#40c463",
+        grade1: "#9be9a8",
+        grade0: "#ebedf0"
+    },
+    classic: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#196127",
+        grade3: "#239a3b",
+        grade2: "#7bc96f",
+        grade1: "#c6e48b",
+        grade0: "#ebedf0"
+    },
+    githubDark: {
+        text: "#ffffff",
+        meta: "#dddddd",
+        grade4: "#27d545",
+        grade3: "#10983d",
+        grade2: "#00602d",
+        grade1: "#003820",
+        grade0: "#161b22"
+    },
+    halloween: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#03001C",
+        grade3: "#FE9600",
+        grade2: "#FFC501",
+        grade1: "#FFEE4A",
+        grade0: "#ebedf0"
+    },
+    teal: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#458B74",
+        grade3: "#66CDAA",
+        grade2: "#76EEC6",
+        grade1: "#7FFFD4",
+        grade0: "#ebedf0"
+    },
+    leftPad: {
+        text: "#ffffff",
+        meta: "#999999",
+        grade4: "#F6F6F6",
+        grade3: "#DDDDDD",
+        grade2: "#A5A5A5",
+        grade1: "#646464",
+        grade0: "#2F2F2F"
+    },
+    dracula: {
+        text: "#f8f8f2",
+        meta: "#666666",
+        grade4: "#ff79c6",
+        grade3: "#bd93f9",
+        grade2: "#6272a4",
+        grade1: "#44475a",
+        grade0: "#282a36"
+    },
+    blue: {
+        text: "#C0C0C0",
+        meta: "#666666",
+        grade4: "#4F83BF",
+        grade3: "#416895",
+        grade2: "#344E6C",
+        grade1: "#263342",
+        grade0: "#222222"
+    },
+    panda: {
+        text: "#E6E6E6",
+        meta: "#676B79",
+        grade4: "#FF4B82",
+        grade3: "#19f9d8",
+        grade2: "#6FC1FF",
+        grade1: "#34353B",
+        grade0: "#242526"
+    },
+    sunny: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#a98600",
+        grade3: "#dab600",
+        grade2: "#e9d700",
+        grade1: "#f8ed62",
+        grade0: "#fff9ae"
+    },
+    pink: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#61185f",
+        grade3: "#a74aa8",
+        grade2: "#ca5bcc",
+        grade1: "#e48bdc",
+        grade0: "#ebedf0"
+    },
+    YlGnBu: {
+        text: "#000000",
+        meta: "#666666",
+        grade4: "#253494",
+        grade3: "#2c7fb8",
+        grade2: "#41b6c4",
+        grade1: "#a1dab4",
+        grade0: "#ebedf0"
+    },
+    solarizedDark: {
+        text: "#93a1a1",
+        meta: "#586e75",
+        grade4: "#d33682",
+        grade3: "#b58900",
+        grade2: "#2aa198",
+        grade1: "#268bd2",
+        grade0: "#073642"
+    },
+    solarizedLight: {
+        text: "#586e75",
+        meta: "#93a1a1",
+        grade4: "#6c71c4",
+        grade3: "#dc322f",
+        grade2: "#cb4b16",
+        grade1: "#b58900",
+        grade0: "#eee8d5"
+    }
+};
+
+// Commit count thresholds for grade-based coloring
+const COMMIT_THRESHOLDS = {
+    grade1: 1,  // 1-2 commits
+    grade2: 3,  // 3-5 commits  
+    grade3: 6,  // 6-10 commits
+    grade4: 11  // 11+ commits
+};
 const MESSAGES = {
     NO_DATA: 'No data available',
     NO_COMMITS: 'No commit data available',
@@ -130,6 +285,26 @@ const Indicator = GObject.registerClass(
 
         _getBoxStyle(bgColor) {
             return `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
+        }
+
+        _getCommitGrade(count) {
+            if (count === 0) return 'grade0';
+            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';
+            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';
+            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';
+            return 'grade4';
+        }
+
+        _getThemedColor(count, themeName, colorMode) {
+            const theme = THEMES[themeName] || THEMES.standard;
+            
+            if (colorMode === 'grade') {
+                const grade = this._getCommitGrade(count);
+                return theme[grade];
+            } else {
+                // Opacity mode - use grade1 color as base for active, grade0 for inactive
+                return count > 0 ? theme.grade3 : theme.grade0;
+            }
         }
 
         _formatDateWithCommits(date, count) {
@@ -262,11 +437,23 @@ const Indicator = GObject.registerClass(
         }
 
         _setBoxAppearance(box, count = 0, highlight = false) {
-            const opacity = count > 0
-                ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
-                : DEFAULT_OPACITY;
-
-            const color = count > 0 ? COLORS.ACTIVE : COLORS.INACTIVE;
+            // Get current theme settings
+            const themeNames = Object.keys(THEMES);
+            const currentThemeName = themeNames[this._preferences.themeName] || 'standard';
+            const colorModeNames = ['opacity', 'grade'];
+            const currentColorMode = colorModeNames[this._preferences.colorMode] || 'opacity';
+            
+            // Get the themed color
+            const color = this._getThemedColor(count, currentThemeName, currentColorMode);
+            
+            let opacity = 255; // Full opacity for grade mode
+            
+            if (currentColorMode === 'opacity') {
+                // Use opacity system for opacity mode
+                opacity = count > 0
+                    ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
+                    : DEFAULT_OPACITY;
+            }
 
             const border = highlight ? '2px solid white' : 'none';
 
@@ -316,7 +503,7 @@ const Indicator = GObject.registerClass(
 
         _setDefaultBoxAppearance() {
             this._boxes.forEach(box => {
-                this._setBoxAppearance(box, 0, MESSAGES.NO_DATA);
+                this._setBoxAppearance(box, 0, false);
             });
 
             this._clearCommitInfoItems();
