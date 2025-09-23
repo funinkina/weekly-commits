@@ -20,11 +20,17 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             title: _('GitHub Username'),
             text: settings.get_string('github-username') || ''
         });
+        usernameRow.connect('notify::text', () => {
+            settings.set_string('github-username', usernameRow.text);
+        });
         group.add(usernameRow);
 
         const tokenRow = new Adw.PasswordEntryRow({
             title: _('GitHub Personal Access Token'),
             text: settings.get_string('github-token') || ''
+        });
+        tokenRow.connect('notify::text', () => {
+            settings.set_string('github-token', tokenRow.text);
         });
         group.add(tokenRow);
 
@@ -56,6 +62,10 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         if (activeIndex === -1) activeIndex = 5;
         intervalRow.selected = activeIndex;
 
+        intervalRow.connect('notify::selected', () => {
+            settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
+        });
+
         refreshGroup.add(intervalRow);
 
         const displayGroup = new Adw.PreferencesGroup();
@@ -67,6 +77,9 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             subtitle: _('Add a white border around the current day\'s box')
         });
         highlightCurrentDayRow.set_active(settings.get_boolean('highlight-current-day'));
+        highlightCurrentDayRow.connect('notify::active', () => {
+            settings.set_boolean('highlight-current-day', highlightCurrentDayRow.get_active());
+        });
         displayGroup.add(highlightCurrentDayRow);
 
         const showWeekOnlyRow = new Adw.SwitchRow({
@@ -74,6 +87,9 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             subtitle: _('Display commits for the current week instead of the last 7 days')
         });
         showWeekOnlyRow.set_active(settings.get_boolean('show-current-week-only'));
+        showWeekOnlyRow.connect('notify::active', () => {
+            settings.set_boolean('show-current-week-only', showWeekOnlyRow.get_active());
+        });
         displayGroup.add(showWeekOnlyRow);
 
         const weekStartRow = new Adw.ComboRow({
@@ -96,6 +112,10 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         weekStartRow.model = weekDayModel;
         weekStartRow.selected = settings.get_enum('week-start-day');
 
+        weekStartRow.connect('notify::selected', () => {
+            settings.set_enum('week-start-day', weekStartRow.selected);
+        });
+
         weekStartRow.set_sensitive(showWeekOnlyRow.get_active());
         showWeekOnlyRow.connect('notify::active', () => {
             weekStartRow.set_sensitive(showWeekOnlyRow.get_active());
@@ -117,6 +137,10 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         colorModes.forEach(mode => colorModeModel.append(mode));
         colorModeRow.model = colorModeModel;
         colorModeRow.selected = settings.get_enum('color-mode');
+
+        colorModeRow.connect('notify::selected', () => {
+            settings.set_enum('color-mode', colorModeRow.selected);
+        });
 
         displayGroup.add(colorModeRow);
 
@@ -147,6 +171,10 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         themeRow.model = themeModel;
         themeRow.selected = settings.get_enum('theme-name');
 
+        themeRow.connect('notify::selected', () => {
+            settings.set_enum('theme-name', themeRow.selected);
+        });
+
         displayGroup.add(themeRow);
 
         const positionGroup = new Adw.PreferencesGroup();
@@ -171,6 +199,10 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         const currentPosition = settings.get_enum('panel-position');
         positionRow.selected = currentPosition;
 
+        positionRow.connect('notify::selected', () => {
+            settings.set_enum('panel-position', positionRow.selected);
+        });
+
         positionGroup.add(positionRow);
 
         const indexRow = new Adw.SpinRow({
@@ -185,23 +217,16 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             })
         });
 
-        positionGroup.add(indexRow);
-
-        const saveActionGroup = new Adw.PreferencesGroup();
-        const saveButton = new Gtk.Button({
-            label: _('Save'),
-            css_classes: ['suggested-action'],
-            halign: Gtk.Align.CENTER,
-            margin_top: 12,
-            margin_bottom: 12
+        indexRow.connect('notify::value', () => {
+            settings.set_int('panel-index', indexRow.value);
         });
-        saveActionGroup.add(saveButton);
+
+        positionGroup.add(indexRow);
 
         page.add(group);
         page.add(refreshGroup);
         page.add(displayGroup);
         page.add(positionGroup);
-        page.add(saveActionGroup);
 
         const spacerGroup = new Adw.PreferencesGroup();
         spacerGroup.set_vexpand(true);
@@ -229,18 +254,5 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         window.add(new About(this));
         window.set_title(_('Weekly Commits Settings'));
         window.set_default_size(650, 750);
-
-        saveButton.connect('clicked', () => {
-            settings.set_string('github-username', usernameRow.text);
-            settings.set_string('github-token', tokenRow.text);
-            settings.set_int('refresh-interval', intervals[intervalRow.selected].value);
-            settings.set_boolean('highlight-current-day', highlightCurrentDayRow.get_active());
-            settings.set_boolean('show-current-week-only', showWeekOnlyRow.get_active());
-            settings.set_enum('week-start-day', weekStartRow.selected);
-            settings.set_enum('color-mode', colorModeRow.selected);
-            settings.set_enum('theme-name', themeRow.selected);
-            settings.set_enum('panel-position', positionRow.selected);
-            settings.set_int('panel-index', indexRow.value);
-        });
     }
 }

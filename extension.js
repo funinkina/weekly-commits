@@ -437,9 +437,13 @@ const Indicator = GObject.registerClass(
         }
 
         _setBoxAppearance(box, count = 0, highlight = false) {
-            // Get current theme settings
-            const themeNames = Object.keys(THEMES);
-            const currentThemeName = themeNames[this._preferences.themeName] || 'standard';
+            // Get current theme settings - map enum index to theme key according to schema
+            const themeKeys = [
+                'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad', 
+                'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu', 
+                'solarizedDark', 'solarizedLight'
+            ];
+            const currentThemeName = themeKeys[this._preferences.themeName] || 'standard';
             const colorModeNames = ['opacity', 'grade'];
             const currentColorMode = colorModeNames[this._preferences.colorMode] || 'opacity';
             
