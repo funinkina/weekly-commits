@@ -103,6 +103,52 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
 
         displayGroup.add(weekStartRow);
 
+        const colorModeRow = new Adw.ComboRow({
+            title: _('Color Mode'),
+            subtitle: _('Choose between opacity-based or grade-based coloring')
+        });
+
+        const colorModes = [
+            _('Opacity Mode'),
+            _('Grade Mode')
+        ];
+
+        const colorModeModel = new Gtk.StringList();
+        colorModes.forEach(mode => colorModeModel.append(mode));
+        colorModeRow.model = colorModeModel;
+        colorModeRow.selected = settings.get_enum('color-mode');
+
+        displayGroup.add(colorModeRow);
+
+        const themeRow = new Adw.ComboRow({
+            title: _('Color Theme'),
+            subtitle: _('Select a color theme for commit visualization')
+        });
+
+        const themes = [
+            { key: 'standard', label: _('GitHub') },
+            { key: 'classic', label: _('GitHub Classic') },
+            { key: 'githubDark', label: _('GitHub Dark') },
+            { key: 'halloween', label: _('Halloween') },
+            { key: 'teal', label: _('Teal') },
+            { key: 'leftPad', label: _('@left_pad') },
+            { key: 'dracula', label: _('Dracula') },
+            { key: 'blue', label: _('Blue') },
+            { key: 'panda', label: _('Panda 🐼') },
+            { key: 'sunny', label: _('Sunny') },
+            { key: 'pink', label: _('Pink') },
+            { key: 'YlGnBu', label: _('YlGnBu') },
+            { key: 'solarizedDark', label: _('Solarized Dark') },
+            { key: 'solarizedLight', label: _('Solarized Light') }
+        ];
+
+        const themeModel = new Gtk.StringList();
+        themes.forEach(theme => themeModel.append(theme.label));
+        themeRow.model = themeModel;
+        themeRow.selected = settings.get_enum('theme-name');
+
+        displayGroup.add(themeRow);
+
         const positionGroup = new Adw.PreferencesGroup();
         positionGroup.set_title(_('Panel Position'));
         positionGroup.set_description(_('Customize the position of the extension in the panel'));
@@ -191,6 +237,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             settings.set_boolean('highlight-current-day', highlightCurrentDayRow.get_active());
             settings.set_boolean('show-current-week-only', showWeekOnlyRow.get_active());
             settings.set_enum('week-start-day', weekStartRow.selected);
+            settings.set_enum('color-mode', colorModeRow.selected);
+            settings.set_enum('theme-name', themeRow.selected);
             settings.set_enum('panel-position', positionRow.selected);
             settings.set_int('panel-index', indexRow.value);
         });

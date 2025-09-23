@@ -129,6 +129,24 @@ export default class About extends Adw.PreferencesPage {
         coffeeRow.add_prefix(coffeeIcon);
         authorGroup.add(coffeeRow);
         this._makeRowClickable(coffeeRow, buyMeCoffeeLink);
+
+        const contributorsGroup = new Adw.PreferencesGroup({
+            title: _('Contributors')
+        });
+        this.add(contributorsGroup);
+
+        const contributorRow = new Adw.ActionRow({
+            title: _('Aryan-Techie'),
+            subtitle: _('Theme system implementation - github.com/aryan-techie'),
+            activatable: true
+        });
+
+        const contributorIcon = new Gtk.Image({
+            icon_name: 'system-users-symbolic'
+        });
+        contributorRow.add_prefix(contributorIcon);
+        contributorsGroup.add(contributorRow);
+        this._makeRowClickable(contributorRow, 'https://github.com/aryan-techie');
     }
 
     _makeRowClickable(row, link) {

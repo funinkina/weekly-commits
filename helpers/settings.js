@@ -68,6 +68,22 @@ export class ExtensionSettings {
         this._settings.set_enum('week-start-day', value);
     }
 
+    get themeName() {
+        return this._settings.get_enum('theme-name');
+    }
+
+    set themeName(value) {
+        this._settings.set_enum('theme-name', value);
+    }
+
+    get colorMode() {
+        return this._settings.get_enum('color-mode');
+    }
+
+    set colorMode(value) {
+        this._settings.set_enum('color-mode', value);
+    }
+
     connectChanged(callback) {
         return this._settings.connect('changed', callback);
     }
