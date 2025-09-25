@@ -1,5 +1,6 @@
 {
   "name": "Weekly Commits",
+  "version": "7",
   "description": "See your weekly GitHub commits in top bar",
   "uuid": "weekly-commits@funinkina.is-a.dev",
   "author": "Aryan Kushwaha <aryankushwaha3101@gmail.com>",

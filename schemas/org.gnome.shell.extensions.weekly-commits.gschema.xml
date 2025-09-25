@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+  <enum id="org.gnome.shell.extensions.weekly-commits.theme-name">
+    <value value="0" nick="standard"/>
+    <value value="1" nick="classic"/>
+    <value value="2" nick="githubDark"/>
+    <value value="3" nick="halloween"/>
+    <value value="4" nick="teal"/>
+    <value value="5" nick="leftPad"/>
+    <value value="6" nick="dracula"/>
+    <value value="7" nick="blue"/>
+    <value value="8" nick="panda"/>
+    <value value="9" nick="sunny"/>
+    <value value="10" nick="pink"/>
+    <value value="11" nick="YlGnBu"/>
+    <value value="12" nick="solarizedDark"/>
+    <value value="13" nick="solarizedLight"/>
+  </enum>
+
+  <enum id="org.gnome.shell.extensions.weekly-commits.color-mode">
+    <value value="0" nick="opacity"/>
+    <value value="1" nick="grade"/>
+  </enum>
+
   <enum id="org.gnome.shell.extensions.weekly-commits.panel-position">
     <value value="0" nick="left"/>
     <value value="1" nick="center"/>
@@ -56,6 +78,16 @@
       <default>false</default>
       <summary>Highlight Current Day</summary>
       <description>Adds a white border around the current day's box for easier identification.</description>
+    </key>
+    <key name="theme-name" enum="org.gnome.shell.extensions.weekly-commits.theme-name">
+      <default>'standard'</default>
+      <summary>Color Theme</summary>
+      <description>The color theme to use for displaying commit activity.</description>
+    </key>
+    <key name="color-mode" enum="org.gnome.shell.extensions.weekly-commits.color-mode">
+      <default>'opacity'</default>
+      <summary>Color Mode</summary>
+      <description>Whether to use opacity-based or grade-based coloring for commit activity.</description>
     </key>
   </schema>
 </schemalist>
