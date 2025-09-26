@@ -17,6 +17,8 @@
 - GUI preferences menu to set GitHub credentials and other settings.
 - Auto update the data based on configurable intervals.
 - Set the position of the extension manually.
+- **Multiple color themes**: Choose from 14 different color themes including GitHub, Dracula, Halloween, and more.
+- **Flexible coloring modes**: Switch between opacity-based and grade-based coloring systems.
 
 ## Installation
 1. Clone this repository:
@@ -45,6 +47,7 @@ And put your GitHub username and the token in the extension's settings.
 - [x] Let users configure the placement in the top bar.
 - [x] Add a popup with the number of commits on the day.
 - [x] Add option for week start day (Monday or Sunday).
+- [x] **Multiple color themes with opacity and grade-based coloring modes**.
 - [ ] Customisable commit view thresholds.
 - [ ] Add translations.
 

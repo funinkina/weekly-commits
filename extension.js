@@ -168,15 +168,15 @@ const THEMES = {
     }
 };
 
-// Determine the intensity of the box color
+
+// Commit count thresholds for grade-based coloring
 const COMMIT_THRESHOLDS = {
-    grade1: 1,  // Light shade: 1-2 commits (just getting started)
-    grade2: 3,  // Medium shade: 3-5 commits (good activity)
-    grade3: 6,  // Darker shade: 6-10 commits (very active)
-    grade4: 11  // Darkest shade: 11+ commits (extremely productive day!)
+    grade1: 1,  // 1-2 commits
+    grade2: 3,  // 3-5 commits  
+    grade3: 6,  // 6-10 commits
+    grade4: 11  // 11+ commits
 };
 
-// User-friendly messages for different situations
 const MESSAGES = {
     NO_DATA: 'No data available',
     NO_COMMITS: 'No commit data available',
@@ -332,6 +332,26 @@ const Indicator = GObject.registerClass(
             }
         }
 
+        _getCommitGrade(count) {
+            if (count === 0) return 'grade0';
+            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';
+            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';
+            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';
+            return 'grade4';
+        }
+
+        _getThemedColor(count, themeName, colorMode) {
+            const theme = THEMES[themeName] || THEMES.standard;
+            
+            if (colorMode === 'grade') {
+                const grade = this._getCommitGrade(count);
+                return theme[grade];
+            } else {
+                // Opacity mode - use grade1 color as base for active, grade0 for inactive
+                return count > 0 ? theme.grade3 : theme.grade0;
+            }
+        }
+
         _formatDateWithCommits(date, count) {
             const today = new Date();
             const isToday = date.getDate() === today.getDate() &&
@@ -472,7 +492,8 @@ const Indicator = GObject.registerClass(
         }
 
         _setBoxAppearance(box, count = 0, highlight = false) {
-            // Convert user's theme preference (number from settings) to actual theme name
+
+            // Get current theme settings - map enum index to theme key according to schema
             const themeKeys = [
                 'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad', 
                 'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu', 

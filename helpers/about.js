@@ -150,12 +150,14 @@ export default class About extends Adw.PreferencesPage {
 
         const contributorsGroup = new Adw.PreferencesGroup({
             title: _('Contributor')
+
         });
         this.add(contributorsGroup);
 
         const contributorRow = new Adw.ActionRow({
             title: _('Aryan-Techie'),
             subtitle: _('Developer - github.com/aryan-techie'),
+
             activatable: true
         });
 
