@@ -186,6 +186,30 @@ If you find Weekly Commits useful, consider supporting its development:
 - Check existing issues for solutions
 - Provide your GNOME Shell version and error logs
 
+## 👥 Credits
+
+This project exists thanks to the contributions of:
+
+### 🚀 Core Development
+- **[Aryan Kushwaha (@funinkina)](https://github.com/funinkina)** - *Original Creator & Lead Developer*
+  - Initial extension concept and implementation
+  - Core GitHub API integration
+  - Base UI and functionality
+  - Project architecture and design decisions
+
+### ✨ Feature Development & Enhancements
+- **[Aryan Techie (@Aryan-Techie)](https://github.com/aryan-techie)** - *Feature Developer & Contributor*
+  - Theme system implementation (14+ color themes)
+  - Settings page enhancements and instant save functionality
+  - UI/UX improvements and bug fixes
+  - About section enhancements
+  - New Icon design and branding improvements
+  - Comprehensive documentation overhaul
+
+---
+
+*Want to contribute? Check our [Contributing Guidelines](#🛠️-development--contributing) and join us!*
+
 ## 📄 License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
