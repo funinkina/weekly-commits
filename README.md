@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width="120" />
+  <img src="icons/logo-sq-cir.png" alt="Weekly Commits Logo" width="120" />
   <h1>Weekly Commits</h1>
   <p><strong>A GNOME Shell extension to visualize your GitHub contributions in the top bar</strong></p>
   
