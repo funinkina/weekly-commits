@@ -11,31 +11,32 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { fetchContributions, getDates } from './helpers/githubService.js';
 import { ExtensionSettings } from './helpers/settings.js';
 
-const BOX_SIZE = 14;
-const BOX_MARGIN = 4;
-const BORDER_RADIUS = 3;
+// Visual constants for the commit boxes in the top bar
+const BOX_SIZE = 14;        // Size of each commit box in pixels
+const BOX_MARGIN = 4;       // Space between each box
+const BORDER_RADIUS = 3;    // Rounded corners for the boxes
 const COLORS = {
-    ACTIVE: '#4CAF50',
-    INACTIVE: '#8e8e8e',
-    DEFAULT: '#888888'
+    ACTIVE: '#4CAF50',      // Green color for days with commits
+    INACTIVE: '#8e8e8e',    // Gray color for days without commits
+    DEFAULT: '#888888'      // Default fallback color
 };
 
-// Theme definitions
+// All available color themes - these match what users see in settings
 const THEME_NAMES = {
-    standard: "GitHub",
-    classic: "GitHub Classic",
-    githubDark: "GitHub Dark",
-    halloween: "Halloween",
-    teal: "Teal",
-    leftPad: "@left_pad",
-    dracula: "Dracula",
-    blue: "Blue",
-    panda: "Panda 🐼",
-    sunny: "Sunny",
-    pink: "Pink",
-    YlGnBu: "YlGnBu",
-    solarizedDark: 'Solarized Dark',
-    solarizedLight: 'Solarized Light'
+    standard: "GitHub",             // Classic GitHub green theme
+    classic: "GitHub Classic",     // Original GitHub contribution colors
+    githubDark: "GitHub Dark",     // GitHub's dark mode colors
+    halloween: "Halloween",        // Orange and dark spooky colors
+    teal: "Teal",                 // Calming teal/aqua colors
+    leftPad: "@left_pad",         // Grayscale theme inspired by the infamous npm package
+    dracula: "Dracula",           // Popular dark theme with purple/pink accents
+    blue: "Blue",                 // Cool blue gradient theme
+    panda: "Panda 🐼",            // Black and white with colorful accents
+    sunny: "Sunny",               // Bright yellow/gold theme
+    pink: "Pink",                 // Pink/magenta gradient theme
+    YlGnBu: "YlGnBu",            // Yellow-Green-Blue scientific colormap
+    solarizedDark: 'Solarized Dark',   // Popular developer theme (dark)
+    solarizedLight: 'Solarized Light'  // Popular developer theme (light)
 };
 
 const THEMES = {
@@ -167,6 +168,7 @@ const THEMES = {
     }
 };
 
+
 // Commit count thresholds for grade-based coloring
 const COMMIT_THRESHOLDS = {
     grade1: 1,  // 1-2 commits
@@ -174,16 +176,19 @@ const COMMIT_THRESHOLDS = {
     grade3: 6,  // 6-10 commits
     grade4: 11  // 11+ commits
 };
+
 const MESSAGES = {
     NO_DATA: 'No data available',
     NO_COMMITS: 'No commit data available',
     MISSING_CREDENTIALS: 'Missing GitHub username or token',
     PREFS_ERROR: 'Failed to open extension preferences.'
 };
-const DATE_FORMAT = { month: 'short' };
-const DEFAULT_OPACITY = 50;
-const MAX_OPACITY_INCREASE = 205;
-const OPACITY_PER_COMMIT = 20;
+
+// Display and animation settings
+const DATE_FORMAT = { month: 'short' };        // How dates appear in the menu
+const DEFAULT_OPACITY = 50;                    // Base opacity for boxes with no commits
+const MAX_OPACITY_INCREASE = 205;              // Maximum opacity boost for active boxes
+const OPACITY_PER_COMMIT = 20;                 // How much opacity increases per commit
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
@@ -213,6 +218,7 @@ const Indicator = GObject.registerClass(
         }
 
         _buildUI() {
+            // Create the main container that holds our week of commit boxes
             const containerBox = new St.BoxLayout({
                 vertical: true,
                 x_expand: false,
@@ -220,13 +226,16 @@ const Indicator = GObject.registerClass(
                 y_align: Clutter.ActorAlign.CENTER
             });
 
+            // Horizontal row that will contain all 7 day boxes
             const hbox = new St.BoxLayout({
                 x_expand: false,
                 y_expand: false,
                 y_align: Clutter.ActorAlign.CENTER
             });
 
+            // Create 7 boxes (one for each day of the week)
             for (let i = 0; i < 7; i++) {
+                // Container for each individual day box
                 const boxContainer = new St.Widget({
                     layout_manager: new Clutter.BinLayout(),
                     x_expand: false,
@@ -236,37 +245,43 @@ const Indicator = GObject.registerClass(
                     style: `margin-right: ${BOX_MARGIN}px;`
                 });
 
+                // The actual visual box that shows commit activity
                 const box = new St.Widget({
                     style_class: 'commit-box',
                     height: BOX_SIZE,
                     width: BOX_SIZE,
-                    style: this._getBoxStyle(COLORS.DEFAULT),
+                    style: this._getBoxStyle(COLORS.DEFAULT, true), // Start with empty styling
                     opacity: DEFAULT_OPACITY,
                 });
 
                 boxContainer.add_child(box);
-                this._boxes.push(box);
+                this._boxes.push(box);            // Keep track of all boxes for updates
                 hbox.add_child(boxContainer);
             }
 
             containerBox.add_child(hbox);
-            this.add_child(containerBox);
+            this.add_child(containerBox);         // Add to the panel button
         }
 
         _setupMenuItems() {
+            // Add "Refresh Now" button to the dropdown menu
             const refreshItem = new PopupMenu.PopupMenuItem(_('Refresh Now'));
             refreshItem.connect('activate', () => {
+                // Show user we're working on it
                 refreshItem.label.text = _('Refreshing...');
 
+                // Clear old commit info and fetch new data
                 this._clearCommitInfoItems();
 
                 this._updateContributionDisplay().finally(() => {
+                    // Reset button text when done
                     refreshItem.label.text = _('Refresh Now');
                     this._refreshMenu();
                 });
             });
             this.menu.addMenuItem(refreshItem);
 
+            // Add "Settings" button to open extension preferences
             const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             settingsItem.connect('activate', () => {
                 this._openPreferences()
@@ -283,8 +298,38 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _getBoxStyle(bgColor) {
-            return `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
+        _getBoxStyle(bgColor, isEmpty = false) {
+            // Create the CSS styling for each commit activity box
+            let style = `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
+            
+            // Add a very subtle border so boxes are always visible, even on pure black backgrounds
+            style += ' border: 1px solid rgba(255, 255, 255, 0.08);';
+            
+            return style;
+        }
+
+        _getCommitGrade(count) {
+            // Determine how "intense" the color should be based on commit count
+            // This follows GitHub's contribution graph logic
+            if (count === 0) return 'grade0';                              // No commits = lightest/empty
+            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';         // 1-2 commits = light
+            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';         // 3-5 commits = medium
+            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';         // 6-10 commits = dark
+            return 'grade4';                                                // 11+ commits = darkest
+        }
+
+        _getThemedColor(count, themeName, colorMode) {
+            // Get the color scheme for the current theme
+            const theme = THEMES[themeName] || THEMES.standard;
+            
+            if (colorMode === 'grade') {
+                // Grade mode: different colors for different activity levels (like GitHub)
+                const grade = this._getCommitGrade(count);
+                return theme[grade];
+            } else {
+                // Opacity mode: same color for all, just varies transparency
+                return count > 0 ? theme.grade3 : theme.grade0;
+            }
         }
 
         _getCommitGrade(count) {
@@ -377,10 +422,12 @@ const Indicator = GObject.registerClass(
 
         async _updateContributionDisplay() {
             try {
+                // Make sure we have boxes to update
                 if (!this._boxes || !this._boxes.length) {
                     return;
                 }
 
+                // Get user's settings from the preferences
                 const {
                     githubUsername: username,
                     githubToken: token,
@@ -389,23 +436,28 @@ const Indicator = GObject.registerClass(
                     highlightCurrentDay
                 } = this._preferences;
 
+                // Can't do anything without GitHub creds
                 if (!username || !token) {
                     console.warn(`Weekly Commits Extension: ${MESSAGES.MISSING_CREDENTIALS}`);
                     this._setDefaultBoxAppearance();
                     return;
                 }
 
+                // Fetch commit data from GitHub API
                 const counts = await fetchContributions(username, token, showCurrentWeekOnly, weekStartDay);
 
+                // Double-check boxes still exist (user might have disabled extension)
                 if (!this._boxes || !this._boxes.length) {
                     return;
                 }
 
                 if (counts && counts.length === 7) {
+                    //Update both the boxes and the dropdown menu
                     const dates = getDates(false, showCurrentWeekOnly, weekStartDay);
 
                     this._updateCommitInfoSection(dates, counts);
 
+                    // Update each box with its commit count and styling
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
                             const isToday = this._isToday(dates[index]);
@@ -415,16 +467,19 @@ const Indicator = GObject.registerClass(
                         }
                     });
                 } else {
+                    // Something went wrong with the GitHub API
                     console.error('Weekly Commits Extension: Failed to get valid contribution counts.');
                     this._setDefaultBoxAppearance();
                 }
             } catch (e) {
+                // Handle errors
                 console.error(`Weekly Commits Extension: Error updating display - ${e.message}`);
                 if (this._boxes && this._boxes.length) {
                     this._setDefaultBoxAppearance();
                 }
             }
 
+            // Set up the next automatic refresh
             this._scheduleNextRefresh();
             return Promise.resolve();
         }
@@ -437,6 +492,7 @@ const Indicator = GObject.registerClass(
         }
 
         _setBoxAppearance(box, count = 0, highlight = false) {
+
             // Get current theme settings - map enum index to theme key according to schema
             const themeKeys = [
                 'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad', 
@@ -444,25 +500,37 @@ const Indicator = GObject.registerClass(
                 'solarizedDark', 'solarizedLight'
             ];
             const currentThemeName = themeKeys[this._preferences.themeName] || 'standard';
+            
+            // Convert user's color mode preference (number from settings) to mode name
             const colorModeNames = ['opacity', 'grade'];
             const currentColorMode = colorModeNames[this._preferences.colorMode] || 'opacity';
             
-            // Get the themed color
-            const color = this._getThemedColor(count, currentThemeName, currentColorMode);
+            // Get the appropriate color for this day's commit count
+            let color = this._getThemedColor(count, currentThemeName, currentColorMode);
+            const isEmpty = count === 0;
             
-            let opacity = 255; // Full opacity for grade mode
+            // Special case: empty boxes get a subtle white fill so they're visible on dark backgrounds
+            if (isEmpty) {
+                color = 'rgba(255, 255, 255, 0.12)'; // Just enough white to see on pure black
+            }
+            
+            let opacity = 255; // Default to full opacity
             
             if (currentColorMode === 'opacity') {
-                // Use opacity system for opacity mode
+                // In opacity mode, boxes get more opaque with more commits
                 opacity = count > 0
                     ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
-                    : DEFAULT_OPACITY;
+                    : 255; // Empty boxes stay fully opaque so the subtle fill is visible
             }
 
-            const border = highlight ? '2px solid white' : 'none';
-
-            box.opacity = opacity;
-            box.style = `${this._getBoxStyle(color)} border: ${border};`;
+            if (highlight) {
+                box.opacity = opacity;
+                box.style = `${this._getBoxStyle(color, isEmpty)} border: 2px solid rgba(255, 255, 255, 0.6); box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);`;
+            } else {
+                // Regular days just get the themed color and opacity
+                box.opacity = opacity;
+                box.style = this._getBoxStyle(color, isEmpty);
+            }
         }
 
         _scheduleNextRefresh() {
@@ -557,33 +625,41 @@ const Indicator = GObject.registerClass(
 
 export default class WeeklyCommitsExtension extends Extension {
     enable() {
+        // Set up user preferences and settings
         this._preferences = new ExtensionSettings(this);
 
+        // Listen for changes to panel position settings so we can move the indicator
         this._positionChangedId = this._preferences._settings.connect('changed', (settings, key) => {
             if (key === 'panel-position' || key === 'panel-index') {
                 this._updateIndicatorPosition();
             }
         });
 
+        // Wait a bit before creating the indicator to ensure GNOME Shell is ready
+        // This prevents issues during login/startup
         this._enableTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
             if (this._preferences) {
                 this._indicator = new Indicator(this._preferences, this);
                 this._updateIndicatorPosition();
             }
             this._enableTimeoutId = null;
-            return GLib.SOURCE_REMOVE;
+            return GLib.SOURCE_REMOVE; // Don't repeat this timeout
         });
     }
 
     _updateIndicatorPosition() {
+        // Don't do anything if there's no indicator yet
         if (!this._indicator) return;
 
+        // Convert user's position preference to actual panel position
         const position = ['left', 'center', 'right'][this._preferences.panelPosition] || 'right';
         const index = this._preferences.panelIndex || 0;
 
+        // Remove the old indicator from the panel
         this._indicator.destroy();
         this._indicator = null;
 
+        // Create a new indicator in the new position
         if (this._preferences) {
             this._indicator = new Indicator(this._preferences, this);
             Main.panel.addToStatusArea(this.uuid, this._indicator, index, position);
@@ -591,22 +667,25 @@ export default class WeeklyCommitsExtension extends Extension {
     }
 
     disable() {
+        // Clean up any pending timeout from the enable phase
         if (this._enableTimeoutId) {
             GLib.Source.remove(this._enableTimeoutId);
             this._enableTimeoutId = null;
         }
 
+        // Stop listening for settings changes
         if (this._positionChangedId) {
             this._preferences._settings.disconnect(this._positionChangedId);
             this._positionChangedId = null;
         }
 
+        // Remove the indicator from the panel
         if (this._indicator) {
             this._indicator.destroy();
             this._indicator = null;
         }
 
+        // Clean up preferences
         this._preferences = null;
     }
 }
-

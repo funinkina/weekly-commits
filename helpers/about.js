@@ -22,9 +22,13 @@ export default class About extends Adw.PreferencesPage {
         const extensionDir = extensionObject.path;
         const iconFile = GLib.build_filenamev([extensionDir, 'weekly-commits-logo.png']);
         const extensionName = extensionObject.metadata.name;
+        const extensionVersion = extensionObject.metadata.version || '1.0';
+        const extensionDescription = extensionObject.metadata.description;
+        const supportedShellVersions = extensionObject.metadata['shell-version'];
         const githubLink = 'https://github.com/funinkina/weekly-commits';
-        const issueFeatureLink = 'https://github.com/funinkina/weekly-commits/issues/new';
+        const issueFeatureLink = 'https://github.com/funinkina/weekly-commits/issues';
         const authorBlogsLink = 'https://funinkina.is-a.dev/';
+        const gnomeExtensionsLink = 'https://extensions.gnome.org/extension/8146/weekly-commits/';
 
         const headerGroup = new Adw.PreferencesGroup();
         this.add(headerGroup);
@@ -55,57 +59,56 @@ export default class About extends Adw.PreferencesPage {
         }
 
         const nameLabel = new Gtk.Label({
-            label: `<b><span size="large">${extensionName}</span></b>`,
+            label: `<b><span size="x-large">${extensionName}</span></b>`,
             use_markup: true
         });
 
-        const authorLabel = new Gtk.Label({
-            label: `<span size="small">by funinkina</span>`,
+        const descriptionLabel = new Gtk.Label({
+            label: `<i>${extensionDescription}</i>`,
+            use_markup: true,
+            wrap: true,
+            max_width_chars: 50,
+            justify: Gtk.Justification.CENTER
+        });
+
+        const versionLabel = new Gtk.Label({
+            label: `<span size="small" color="#888">Version ${extensionVersion}</span>`,
             use_markup: true
         });
 
         headerBox.append(iconImage);
         headerBox.append(nameLabel);
-        headerBox.append(authorLabel);
+        headerBox.append(descriptionLabel);
+        headerBox.append(versionLabel);
         headerGroup.add(headerBox);
 
-        const linksGroup = new Adw.PreferencesGroup();
-        this.add(linksGroup);
+        // Quick overview
+        const overviewGroup = new Adw.PreferencesGroup({
+            title: _('What This Extension Does')
+        });
+        this.add(overviewGroup);
 
-        const githubRow = new Adw.ActionRow({
-            title: _('GitHub Repository'),
-            subtitle: githubLink,
-            activatable: true
+        const overviewRow = new Adw.ActionRow({
+            title: _('GitHub Commit Visualization'),
+            subtitle: _('Shows your weekly GitHub activity in the top bar with 14 beautiful themes, smart coloring, auto-updates, and customizable positioning.')
         });
 
-        const githubIcon = new Gtk.Image({
-            icon_name: 'web-browser-symbolic'
+        const overviewIcon = new Gtk.Image({
+            icon_name: 'view-grid-symbolic'
         });
-        githubRow.add_prefix(githubIcon);
-        linksGroup.add(githubRow);
-        this._makeRowClickable(githubRow, githubLink);
+        overviewRow.add_prefix(overviewIcon);
+        overviewGroup.add(overviewRow);
 
-        const issueRow = new Adw.ActionRow({
-            title: _('Report Issue or Request Feature'),
-            subtitle: _('Help improve this extension'),
-            activatable: true
-        });
 
-        const issueIcon = new Gtk.Image({
-            icon_name: 'dialog-question-symbolic'
-        });
-        issueRow.add_prefix(issueIcon);
-        linksGroup.add(issueRow);
-        this._makeRowClickable(issueRow, issueFeatureLink);
 
         const authorGroup = new Adw.PreferencesGroup({
-            title: _('More About the Author')
+            title: _('The Developer')
         });
         this.add(authorGroup);
 
         const moreInfo = new Adw.ActionRow({
-            title: _('More about me'),
-            subtitle: authorBlogsLink,
+            title: _("Visit Developer's Website"),
+            subtitle: _('Explore funinkina\'s projects, blog, work and more'),
             activatable: true
         });
 
@@ -116,28 +119,45 @@ export default class About extends Adw.PreferencesPage {
         authorGroup.add(moreInfo);
         this._makeRowClickable(moreInfo, authorBlogsLink);
 
+        // Sponsor button for funinkina (below developer info)
+        const funinkinaSponsorsLink = 'https://github.com/sponsors/funinkina';
+        const funinkinaSponsorsRow = new Adw.ActionRow({
+            title: _('Sponsor funinkina'),
+            subtitle: _('Support the creator on GitHub Sponsors'),
+            activatable: true
+        });
+
+        const funinkinaSponsorsIcon = new Gtk.Image({
+            icon_name: 'starred-symbolic',
+        });
+        funinkinaSponsorsRow.add_prefix(funinkinaSponsorsIcon);
+        authorGroup.add(funinkinaSponsorsRow);
+        this._makeRowClickable(funinkinaSponsorsRow, funinkinaSponsorsLink);
+
         const buyMeCoffeeLink = 'https://www.buymeacoffee.com/funinkina';
         const coffeeRow = new Adw.ActionRow({
             title: _('Buy Me a Coffee'),
-            subtitle: _('Support me if you like my work.'),
+            subtitle: _('Quick one-time support for the project'),
             activatable: true
         });
 
         const coffeeIcon = new Gtk.Image({
-            icon_name: 'emblem-favorite-symbolic'
+            icon_name: 'cafe-symbolic'
         });
         coffeeRow.add_prefix(coffeeIcon);
         authorGroup.add(coffeeRow);
         this._makeRowClickable(coffeeRow, buyMeCoffeeLink);
 
         const contributorsGroup = new Adw.PreferencesGroup({
-            title: _('Contributors')
+            title: _('Contributor')
+
         });
         this.add(contributorsGroup);
 
         const contributorRow = new Adw.ActionRow({
             title: _('Aryan-Techie'),
-            subtitle: _('Theme system implementation - github.com/aryan-techie'),
+            subtitle: _('Developer - github.com/aryan-techie'),
+
             activatable: true
         });
 
@@ -146,7 +166,68 @@ export default class About extends Adw.PreferencesPage {
         });
         contributorRow.add_prefix(contributorIcon);
         contributorsGroup.add(contributorRow);
-        this._makeRowClickable(contributorRow, 'https://github.com/aryan-techie');
+        this._makeRowClickable(contributorRow, 'https://aryantechie.com');
+
+        // Sponsor button for Aryan-Techie (below contributor info)
+        const aryanSponsorsLink = 'https://github.com/sponsors/Aryan-Techie';
+        const aryanSponsorsRow = new Adw.ActionRow({
+            title: _('Sponsor Aryan-Techie'),
+            subtitle: _('Support the contributor on GitHub Sponsors'),
+            activatable: true
+        });
+
+        const aryanSponsorsIcon = new Gtk.Image({
+            icon_name: 'starred-symbolic',
+        });
+        aryanSponsorsRow.add_prefix(aryanSponsorsIcon);
+        contributorsGroup.add(aryanSponsorsRow);
+        this._makeRowClickable(aryanSponsorsRow, aryanSponsorsLink);
+
+        // Links section moved to bottom
+        const linksGroup = new Adw.PreferencesGroup({
+            title: _('Get Involved'),
+            description: _('Explore, contribute, and get help')
+        });
+        this.add(linksGroup);
+
+        const gnomeExtensionsRow = new Adw.ActionRow({
+            title: _('GNOME Extensions'),
+            subtitle: _('Official extension page - Leave a review!'),
+            activatable: true
+        });
+
+        const gnomeIcon = new Gtk.Image({
+            icon_name: 'org.gnome.Extensions-symbolic'
+        });
+        gnomeExtensionsRow.add_prefix(gnomeIcon);
+        linksGroup.add(gnomeExtensionsRow);
+        this._makeRowClickable(gnomeExtensionsRow, gnomeExtensionsLink);
+
+        const githubRow = new Adw.ActionRow({
+            title: _('Source Code'),
+            subtitle: _('View on GitHub - Star the repository!'),
+            activatable: true
+        });
+
+        const githubIcon = new Gtk.Image({
+            icon_name: 'text-x-generic-symbolic'
+        });
+        githubRow.add_prefix(githubIcon);
+        linksGroup.add(githubRow);
+        this._makeRowClickable(githubRow, githubLink);
+
+        const issueRow = new Adw.ActionRow({
+            title: _('Report Issue or Request Feature'),
+            subtitle: _('Help us to make this extension even better'),
+            activatable: true
+        });
+
+        const issueIcon = new Gtk.Image({
+            icon_name: 'dialog-question-symbolic'
+        });
+        issueRow.add_prefix(issueIcon);
+        linksGroup.add(issueRow);
+        this._makeRowClickable(issueRow, issueFeatureLink);
     }
 
     _makeRowClickable(row, link) {

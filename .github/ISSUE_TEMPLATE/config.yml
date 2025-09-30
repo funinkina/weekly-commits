@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/funinkina/weekly-commits/discussions
+    about: Ask questions and discuss with the community
+  - name: 🌐 GNOME Extensions Page
+    url: https://extensions.gnome.org/extension/8146/weekly-commits/
+    about: Leave a review or see installation instructions
+  - name: 📖 Developer's Website
+    url: https://funinkina.is-a.dev/
+    about: Learn more about the developer and other projects
