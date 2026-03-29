@@ -4,6 +4,10 @@ import Gtk from 'gi://Gtk';
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import About from './helpers/about.js';
 
+// Service type enum values (must match gschema.xml)
+const SERVICE_TYPE_GITHUB = 0;
+const SERVICE_TYPE_GITEA = 1;
+
 export default class WeeklyCommitsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings('org.gnome.shell.extensions.weekly-commits');
@@ -13,11 +17,32 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         page.set_icon_name('preferences-system-symbolic');
 
         const group = new Adw.PreferencesGroup();
-        group.set_title(_('GitHub Credentials'));
-        group.set_description(_('Enter your GitHub username and personal access token'));
+        group.set_title(_('Service Credentials'));
+        group.set_description(_('Enter your git hosting service and credentials'));
+
+        const serviceRow = new Adw.ComboRow({
+            title: _('Git Service'),
+            subtitle: _('Choose the git hosting service to track contributions from')
+        });
+
+        const serviceModel = new Gtk.StringList();
+        serviceModel.append(_('GitHub'));
+        serviceModel.append(_('Gitea / Forgejo'));
+        serviceRow.model = serviceModel;
+        serviceRow.selected = settings.get_enum('service-type');
+        group.add(serviceRow);
+
+        const instanceUrlRow = new Adw.EntryRow({
+            title: _('Instance URL'),
+            text: settings.get_string('custom-instance-url') || ''
+        });
+        instanceUrlRow.connect('notify::text', () => {
+            settings.set_string('custom-instance-url', instanceUrlRow.text);
+        });
+        group.add(instanceUrlRow);
 
         const usernameRow = new Adw.EntryRow({
-            title: _('GitHub Username'),
+            title: _('Username'),
             text: settings.get_string('github-username') || ''
         });
         usernameRow.connect('notify::text', () => {
@@ -26,13 +51,25 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         group.add(usernameRow);
 
         const tokenRow = new Adw.PasswordEntryRow({
-            title: _('GitHub Personal Access Token'),
+            title: _('Personal Access Token'),
             text: settings.get_string('github-token') || ''
         });
         tokenRow.connect('notify::text', () => {
             settings.set_string('github-token', tokenRow.text);
         });
         group.add(tokenRow);
+
+        const updateServiceVisibility = () => {
+            const isGitea = serviceRow.selected === SERVICE_TYPE_GITEA;
+            instanceUrlRow.set_visible(isGitea);
+        };
+
+        serviceRow.connect('notify::selected', () => {
+            settings.set_enum('service-type', serviceRow.selected);
+            updateServiceVisibility();
+        });
+
+        updateServiceVisibility();
 
         const refreshGroup = new Adw.PreferencesGroup();
         refreshGroup.set_title(_('Auto Update Settings'));
@@ -247,6 +284,21 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         });
         infoRow.add_suffix(linkButton);
         infoGroup.add(infoRow);
+
+        const giteaInfoRow = new Adw.ActionRow({
+            title: _('About Gitea / Forgejo Tokens'),
+            subtitle: _('Generate an access token in your instance under Settings → Applications.')
+        });
+        infoGroup.add(giteaInfoRow);
+
+        const updateInfoVisibility = () => {
+            const isGitea = settings.get_enum('service-type') === SERVICE_TYPE_GITEA;
+            infoRow.set_visible(!isGitea);
+            giteaInfoRow.set_visible(isGitea);
+        };
+
+        settings.connect('changed::service-type', updateInfoVisibility);
+        updateInfoVisibility();
 
         page.add(infoGroup);
 

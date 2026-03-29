@@ -28,6 +28,11 @@
     <value value="2" nick="right"/>
   </enum>
 
+  <enum id="org.gnome.shell.extensions.weekly-commits.service-type">
+    <value value="0" nick="github"/>
+    <value value="1" nick="gitea"/>
+  </enum>
+
   <enum id="org.gnome.shell.extensions.weekly-commits.week-start-day">
     <value value="0" nick="sunday"/>
     <value value="1" nick="monday"/>
@@ -39,6 +44,16 @@
   </enum>
 
   <schema id="org.gnome.shell.extensions.weekly-commits" path="/org/gnome/shell/extensions/weekly-commits/">
+    <key name="service-type" enum="org.gnome.shell.extensions.weekly-commits.service-type">
+      <default>'github'</default>
+      <summary>Git Service Type</summary>
+      <description>The git hosting service to fetch contribution data from.</description>
+    </key>
+    <key name="custom-instance-url" type="s">
+      <default>''</default>
+      <summary>Custom Instance URL</summary>
+      <description>Base URL of your Gitea or Forgejo instance (e.g. https://gitea.example.com).</description>
+    </key>
     <key name="github-username" type="s">
       <default>''</default>
       <summary>GitHub Username</summary>

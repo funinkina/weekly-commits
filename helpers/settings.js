@@ -4,6 +4,22 @@ export class ExtensionSettings {
         this._settings = extension.getSettings();
     }
 
+    get serviceType() {
+        return this._settings.get_enum('service-type');
+    }
+
+    set serviceType(value) {
+        this._settings.set_enum('service-type', value);
+    }
+
+    get customInstanceUrl() {
+        return this._settings.get_string('custom-instance-url') || '';
+    }
+
+    set customInstanceUrl(value) {
+        this._settings.set_string('custom-instance-url', value || '');
+    }
+
     get githubUsername() {
         return this._settings.get_string('github-username') || '';
     }
