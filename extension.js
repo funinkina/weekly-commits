@@ -10,6 +10,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import { fetchContributions as fetchGitHubContributions, getDates } from './helpers/githubService.js';
 import { fetchContributions as fetchGiteaContributions } from './helpers/giteaService.js';
+import { fetchContributions as fetchGitLabContributions } from './helpers/gitlabService.js';
 import { ExtensionSettings } from './helpers/settings.js';
 
 // Visual constants for the commit boxes in the top bar
@@ -25,6 +26,7 @@ const COLORS = {
 // Service type enum values (must match gschema.xml)
 const SERVICE_TYPE_GITHUB = 0;
 const SERVICE_TYPE_GITEA = 1;
+const SERVICE_TYPE_GITLAB = 2;
 
 // All available color themes - these match what users see in settings
 const THEME_NAMES = {
@@ -453,7 +455,9 @@ const Indicator = GObject.registerClass(
                 // Fetch commit data from the configured service
                 const counts = serviceType === SERVICE_TYPE_GITEA
                     ? await fetchGiteaContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
-                    : await fetchGitHubContributions(username, token, showCurrentWeekOnly, weekStartDay);
+                    : serviceType === SERVICE_TYPE_GITLAB
+                        ? await fetchGitLabContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
+                        : await fetchGitHubContributions(username, token, showCurrentWeekOnly, weekStartDay);
 
                 // Double-check boxes still exist (user might have disabled extension)
                 if (!this._boxes || !this._boxes.length) {

@@ -7,6 +7,7 @@ import About from './helpers/about.js';
 // Service type enum values (must match gschema.xml)
 const SERVICE_TYPE_GITHUB = 0;
 const SERVICE_TYPE_GITEA = 1;
+const SERVICE_TYPE_GITLAB = 2;
 
 export default class WeeklyCommitsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -28,6 +29,7 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         const serviceModel = new Gtk.StringList();
         serviceModel.append(_('GitHub'));
         serviceModel.append(_('Gitea / Forgejo'));
+        serviceModel.append(_('GitLab'));
         serviceRow.model = serviceModel;
         serviceRow.selected = settings.get_enum('service-type');
         group.add(serviceRow);
@@ -60,8 +62,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         group.add(tokenRow);
 
         const updateServiceVisibility = () => {
-            const isGitea = serviceRow.selected === SERVICE_TYPE_GITEA;
-            instanceUrlRow.set_visible(isGitea);
+            const selected = serviceRow.selected;
+            instanceUrlRow.set_visible(selected === SERVICE_TYPE_GITEA || selected === SERVICE_TYPE_GITLAB);
         };
 
         serviceRow.connect('notify::selected', () => {
@@ -291,10 +293,17 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         });
         infoGroup.add(giteaInfoRow);
 
+        const gitlabInfoRow = new Adw.ActionRow({
+            title: _('About GitLab Tokens'),
+            subtitle: _('Generate a Personal Access Token in your GitLab profile and enable read_api scope.')
+        });
+        infoGroup.add(gitlabInfoRow);
+
         const updateInfoVisibility = () => {
-            const isGitea = settings.get_enum('service-type') === SERVICE_TYPE_GITEA;
-            infoRow.set_visible(!isGitea);
-            giteaInfoRow.set_visible(isGitea);
+            const selected = settings.get_enum('service-type');
+            infoRow.set_visible(selected === SERVICE_TYPE_GITHUB);
+            giteaInfoRow.set_visible(selected === SERVICE_TYPE_GITEA);
+            gitlabInfoRow.set_visible(selected === SERVICE_TYPE_GITLAB);
         };
 
         settings.connect('changed::service-type', updateInfoVisibility);

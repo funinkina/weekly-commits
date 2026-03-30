@@ -31,6 +31,7 @@
   <enum id="org.gnome.shell.extensions.weekly-commits.service-type">
     <value value="0" nick="github"/>
     <value value="1" nick="gitea"/>
+    <value value="2" nick="gitlab"/>
   </enum>
 
   <enum id="org.gnome.shell.extensions.weekly-commits.week-start-day">
