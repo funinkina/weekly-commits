@@ -108,15 +108,15 @@ To start tracking your commits, you'll need to configure your GitHub credentials
 
 Weekly Commits comes with a variety of beautiful themes to match your desktop:
 
-| Theme | Description |
-|-------|-------------|
-| **GitHub** | Classic GitHub contribution graph colors |
-| **Dracula** | Popular dark theme with purple accents |
-| **Halloween** | Spooky orange and black theme |
-| **Panda** | Cute panda-inspired green theme |
-| **Solarized Dark/Light** | Popular developer color schemes |
-| **Blue, Pink, Teal** | Vibrant single-color themes |
-| **Sunny, YlGnBu** | Gradient and scientific visualization themes |
+| Theme                    | Description                                  |
+| ------------------------ | -------------------------------------------- |
+| **GitHub**               | Classic GitHub contribution graph colors     |
+| **Dracula**              | Popular dark theme with purple accents       |
+| **Halloween**            | Spooky orange and black theme                |
+| **Panda**                | Cute panda-inspired green theme              |
+| **Solarized Dark/Light** | Popular developer color schemes              |
+| **Blue, Pink, Teal**     | Vibrant single-color themes                  |
+| **Sunny, YlGnBu**        | Gradient and scientific visualization themes |
 
 ## 🛠️ Development & Contributing
 
@@ -132,6 +132,22 @@ make install
 # Enable the extension
 make enable
 ```
+
+### Packaging for extensions.gnome.org review
+
+When preparing a submission ZIP, only include source files required by the extension.
+
+- Do **not** include `.git/` data
+- Do **not** include compiled schema artifacts like `schemas/gschemas.compiled`
+- Submit a clean ZIP built from source files
+
+Recommended approach:
+
+```bash
+gnome-extensions pack --force
+```
+
+This produces a review-ready archive from extension sources (including schema XML) without development metadata.
 
 ### Contributing
 Contributions are welcome! Please:

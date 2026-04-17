@@ -300,7 +300,7 @@ const Indicator = GObject.registerClass(
             try {
                 await this._extension.openPreferences();
             } catch (e) {
-                console.error('Failed to open preferences:', e);
+                logError(e, 'Weekly Commits Extension: Failed to open preferences');
                 Main.notify(_('Error'), _(MESSAGES.PREFS_ERROR));
             }
         }
@@ -308,10 +308,10 @@ const Indicator = GObject.registerClass(
         _getBoxStyle(bgColor, isEmpty = false) {
             // Create the CSS styling for each commit activity box
             let style = `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
-            
+
             // Add a very subtle border so boxes are always visible, even on pure black backgrounds
             style += ' border: 1px solid rgba(255, 255, 255, 0.08);';
-            
+
             return style;
         }
 
@@ -328,7 +328,7 @@ const Indicator = GObject.registerClass(
         _getThemedColor(count, themeName, colorMode) {
             // Get the color scheme for the current theme
             const theme = THEMES[themeName] || THEMES.standard;
-            
+
             if (colorMode === 'grade') {
                 // Grade mode: different colors for different activity levels (like GitHub)
                 const grade = this._getCommitGrade(count);
@@ -349,7 +349,7 @@ const Indicator = GObject.registerClass(
 
         _getThemedColor(count, themeName, colorMode) {
             const theme = THEMES[themeName] || THEMES.standard;
-            
+
             if (colorMode === 'grade') {
                 const grade = this._getCommitGrade(count);
                 return theme[grade];
@@ -447,7 +447,6 @@ const Indicator = GObject.registerClass(
 
                 // Can't do anything without credentials
                 if (!username || !token) {
-                    console.warn(`Weekly Commits Extension: ${MESSAGES.MISSING_CREDENTIALS}`);
                     this._setDefaultBoxAppearance();
                     return;
                 }
@@ -481,12 +480,12 @@ const Indicator = GObject.registerClass(
                     });
                 } else {
                     // Something went wrong with the API
-                    console.error('Weekly Commits Extension: Failed to get valid contribution counts.');
+                    log('Weekly Commits Extension: Failed to get valid contribution counts.');
                     this._setDefaultBoxAppearance();
                 }
             } catch (e) {
                 // Handle errors
-                console.error(`Weekly Commits Extension: Error updating display - ${e.message}`);
+                logError(e, 'Weekly Commits Extension: Error updating display');
                 if (this._boxes && this._boxes.length) {
                     this._setDefaultBoxAppearance();
                 }
@@ -508,27 +507,27 @@ const Indicator = GObject.registerClass(
 
             // Get current theme settings - map enum index to theme key according to schema
             const themeKeys = [
-                'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad', 
-                'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu', 
+                'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad',
+                'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu',
                 'solarizedDark', 'solarizedLight'
             ];
             const currentThemeName = themeKeys[this._preferences.themeName] || 'standard';
-            
+
             // Convert user's color mode preference (number from settings) to mode name
             const colorModeNames = ['opacity', 'grade'];
             const currentColorMode = colorModeNames[this._preferences.colorMode] || 'opacity';
-            
+
             // Get the appropriate color for this day's commit count
             let color = this._getThemedColor(count, currentThemeName, currentColorMode);
             const isEmpty = count === 0;
-            
+
             // Special case: empty boxes get a subtle white fill so they're visible on dark backgrounds
             if (isEmpty) {
                 color = 'rgba(255, 255, 255, 0.12)'; // Just enough white to see on pure black
             }
-            
+
             let opacity = 255; // Default to full opacity
-            
+
             if (currentColorMode === 'opacity') {
                 // In opacity mode, boxes get more opaque with more commits
                 opacity = count > 0
@@ -571,7 +570,7 @@ const Indicator = GObject.registerClass(
                 try {
                     this._commitSection.destroy();
                 } catch (e) {
-                    console.log('Error destroying commit section:', e);
+                    // Ignore stale actor destroy races during teardown.
                 }
                 this._commitSection = null;
             }
@@ -580,7 +579,7 @@ const Indicator = GObject.registerClass(
                 try {
                     this._separator.destroy();
                 } catch (e) {
-                    console.log('Error destroying separator:', e);
+                    // Ignore stale actor destroy races during teardown.
                 }
                 this._separator = null;
             }
