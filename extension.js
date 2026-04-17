@@ -8,7 +8,9 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { fetchContributions, getDates } from './helpers/githubService.js';
+import { fetchContributions as fetchGitHubContributions, getDates } from './helpers/githubService.js';
+import { fetchContributions as fetchGiteaContributions } from './helpers/giteaService.js';
+import { fetchContributions as fetchGitLabContributions } from './helpers/gitlabService.js';
 import { ExtensionSettings } from './helpers/settings.js';
 
 // Visual constants for the commit boxes in the top bar
@@ -20,6 +22,11 @@ const COLORS = {
     INACTIVE: '#8e8e8e',    // Gray color for days without commits
     DEFAULT: '#888888'      // Default fallback color
 };
+
+// Service type enum values (must match gschema.xml)
+const SERVICE_TYPE_GITHUB = 0;
+const SERVICE_TYPE_GITEA = 1;
+const SERVICE_TYPE_GITLAB = 2;
 
 // All available color themes - these match what users see in settings
 const THEME_NAMES = {
@@ -433,18 +440,24 @@ const Indicator = GObject.registerClass(
                     githubToken: token,
                     showCurrentWeekOnly,
                     weekStartDay,
-                    highlightCurrentDay
+                    highlightCurrentDay,
+                    serviceType,
+                    customInstanceUrl
                 } = this._preferences;
 
-                // Can't do anything without GitHub creds
+                // Can't do anything without credentials
                 if (!username || !token) {
                     console.warn(`Weekly Commits Extension: ${MESSAGES.MISSING_CREDENTIALS}`);
                     this._setDefaultBoxAppearance();
                     return;
                 }
 
-                // Fetch commit data from GitHub API
-                const counts = await fetchContributions(username, token, showCurrentWeekOnly, weekStartDay);
+                // Fetch commit data from the configured service
+                const counts = serviceType === SERVICE_TYPE_GITEA
+                    ? await fetchGiteaContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
+                    : serviceType === SERVICE_TYPE_GITLAB
+                        ? await fetchGitLabContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
+                        : await fetchGitHubContributions(username, token, showCurrentWeekOnly, weekStartDay);
 
                 // Double-check boxes still exist (user might have disabled extension)
                 if (!this._boxes || !this._boxes.length) {
@@ -467,7 +480,7 @@ const Indicator = GObject.registerClass(
                         }
                     });
                 } else {
-                    // Something went wrong with the GitHub API
+                    // Something went wrong with the API
                     console.error('Weekly Commits Extension: Failed to get valid contribution counts.');
                     this._setDefaultBoxAppearance();
                 }
