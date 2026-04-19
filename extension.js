@@ -472,8 +472,8 @@ const Indicator = GObject.registerClass(
                 if (isCached) {
                     const formattedTimestamp = this._formatCacheTimestamp(cachedAt);
                     this._cacheStatusItem.label.text = formattedTimestamp
-                        ? `Showing cached data from ${formattedTimestamp}`
-                        : 'Showing cached data';
+                        ? `Cached on ${formattedTimestamp}`
+                        : 'Cached';
                     this._cacheStatusItem.bin.show();
                 } else {
                     this._cacheStatusItem.label.text = '';
@@ -500,6 +500,11 @@ const Indicator = GObject.registerClass(
                     customInstanceUrl
                 } = this._preferences;
 
+                const cacheService = this._cacheService;
+                if (!cacheService) {
+                    return;
+                }
+
                 const cacheContext = {
                     serviceType,
                     username,
@@ -507,7 +512,7 @@ const Indicator = GObject.registerClass(
                     showCurrentWeekOnly,
                     weekStartDay,
                 };
-                const cacheKey = this._cacheService.buildKey(cacheContext);
+                const cacheKey = cacheService.buildKey(cacheContext);
 
                 // Can't do anything without credentials
                 if (!username || !token) {
@@ -530,11 +535,11 @@ const Indicator = GObject.registerClass(
                         throw new Error('Live fetch did not return a valid 7-day count array.');
                     }
 
-                    await this._cacheService.save(cacheKey, cacheContext, counts);
+                    const cacheSaved = await cacheService.save(cacheKey, cacheContext, counts);
                 } catch (e) {
                     logError(e, 'Weekly Commits Extension: Live fetch failed, trying cache fallback');
 
-                    cachedResult = await this._cacheService.load(cacheKey);
+                    cachedResult = await cacheService.load(cacheKey);
                     if (cachedResult) {
                         counts = cachedResult.counts;
                     }

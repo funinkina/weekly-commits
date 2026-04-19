@@ -52,7 +52,7 @@ export class ContributionCache {
         const normalizedUsername = (username || '').trim().toLowerCase();
         const normalizedInstanceUrl = normalizeInstanceUrl(instanceUrl);
 
-        return [
+        const key = [
             `v${CACHE_VERSION}`,
             String(serviceType),
             normalizedUsername,
@@ -60,6 +60,8 @@ export class ContributionCache {
             showCurrentWeekOnly ? '1' : '0',
             String(weekStartDay),
         ].join('|');
+
+        return key;
     }
 
     async load(cacheKey) {
@@ -88,7 +90,7 @@ export class ContributionCache {
     async save(cacheKey, context, counts) {
         const sanitizedCounts = sanitizeCounts(counts);
         if (!sanitizedCounts) {
-            return;
+            return false;
         }
 
         try {
@@ -105,8 +107,10 @@ export class ContributionCache {
             };
 
             await this._writeCache(cacheData);
+            return true;
         } catch (e) {
             logError(e, 'Weekly Commits Extension: Failed to save cache data');
+            return false;
         }
     }
 
@@ -212,13 +216,25 @@ export class ContributionCache {
             new TextEncoder().encode(JSON.stringify(cacheData, null, 2))
         );
 
-        await this._cacheFile.replace_contents_bytes_async(
-            bytes,
-            null,
-            false,
-            Gio.FileCreateFlags.REPLACE_DESTINATION,
-            null
-        );
+        await new Promise((resolve, reject) => {
+            this._cacheFile.replace_contents_bytes_async(
+                bytes,
+                null,
+                false,
+                Gio.FileCreateFlags.REPLACE_DESTINATION,
+                null,
+                (file, result) => {
+                    try {
+                        file.replace_contents_finish(result);
+                        resolve();
+                    } catch (e) {
+                        reject(e);
+                    }
+                }
+            );
+        });
+
+        cacheDebugLog(`Cache file write complete: ${this._cachePath}; entries=${Object.keys(cacheData.entries).length}`);
     }
 
     _ensureCacheDirectory() {
