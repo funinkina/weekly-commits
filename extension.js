@@ -12,6 +12,7 @@ import { fetchContributions as fetchGitHubContributions, getDates } from './help
 import { fetchContributions as fetchGiteaContributions } from './helpers/giteaService.js';
 import { fetchContributions as fetchGitLabContributions } from './helpers/gitlabService.js';
 import { ExtensionSettings } from './helpers/settings.js';
+import { ContributionCache } from './helpers/cacheService.js';
 
 // Visual constants for the commit boxes in the top bar
 const BOX_SIZE = 14;        // Size of each commit box in pixels
@@ -211,6 +212,8 @@ const Indicator = GObject.registerClass(
             this._refreshTimeoutId = null;
             this._commitSection = null;
             this._separator = null;
+            this._cacheStatusItem = null;
+            this._cacheService = new ContributionCache(this._extension.uuid);
 
             this._buildUI();
             this._setupMenuItems();
@@ -380,7 +383,25 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _updateCommitInfoSection(dates, counts) {
+        _formatCacheTimestamp(isoTimestamp) {
+            if (!isoTimestamp) {
+                return null;
+            }
+
+            const parsedDate = new Date(isoTimestamp);
+            if (Number.isNaN(parsedDate.getTime())) {
+                return null;
+            }
+
+            return parsedDate.toLocaleString();
+        }
+
+        _updateCommitInfoSection(dates, counts, options = {}) {
+            const {
+                isCached = false,
+                cachedAt = null,
+            } = options;
+
             if (!this._commitSection) {
                 this._commitSection = new PopupMenu.PopupMenuSection();
                 this.menu.addMenuItem(this._commitSection, 0);
@@ -409,6 +430,27 @@ const Indicator = GObject.registerClass(
                     this._commitItems.push({ bin: itemBin, label: textItem });
                 }
 
+                const cacheStatusLabel = new St.Label({
+                    text: '',
+                    style_class: 'commit-text-item',
+                    x_align: Clutter.ActorAlign.START,
+                    y_align: Clutter.ActorAlign.CENTER,
+                    style: 'font-style: italic; opacity: 0.85; padding-top: 4px;'
+                });
+
+                const cacheStatusBin = new St.BoxLayout({
+                    style_class: 'popup-menu-item',
+                    reactive: false,
+                    can_focus: false,
+                    track_hover: false,
+                    style: 'padding-top: 4px; padding-bottom: 2px;'
+                });
+
+                cacheStatusBin.add_child(cacheStatusLabel);
+                this._commitSection.box.add_child(cacheStatusBin);
+                this._cacheStatusItem = { bin: cacheStatusBin, label: cacheStatusLabel };
+                this._cacheStatusItem.bin.hide();
+
                 if (!this._separator) {
                     this._separator = new PopupMenu.PopupSeparatorMenuItem();
                     this.menu.addMenuItem(this._separator, 1);
@@ -424,6 +466,19 @@ const Indicator = GObject.registerClass(
                         this._commitItems[index].label.text = label;
                     }
                 });
+            }
+
+            if (this._cacheStatusItem) {
+                if (isCached) {
+                    const formattedTimestamp = this._formatCacheTimestamp(cachedAt);
+                    this._cacheStatusItem.label.text = formattedTimestamp
+                        ? `Showing cached data from ${formattedTimestamp}`
+                        : 'Showing cached data';
+                    this._cacheStatusItem.bin.show();
+                } else {
+                    this._cacheStatusItem.label.text = '';
+                    this._cacheStatusItem.bin.hide();
+                }
             }
         }
 
@@ -445,18 +500,45 @@ const Indicator = GObject.registerClass(
                     customInstanceUrl
                 } = this._preferences;
 
+                const cacheContext = {
+                    serviceType,
+                    username,
+                    instanceUrl: customInstanceUrl,
+                    showCurrentWeekOnly,
+                    weekStartDay,
+                };
+                const cacheKey = this._cacheService.buildKey(cacheContext);
+
                 // Can't do anything without credentials
                 if (!username || !token) {
                     this._setDefaultBoxAppearance();
                     return;
                 }
 
-                // Fetch commit data from the configured service
-                const counts = serviceType === SERVICE_TYPE_GITEA
-                    ? await fetchGiteaContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
-                    : serviceType === SERVICE_TYPE_GITLAB
-                        ? await fetchGitLabContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
-                        : await fetchGitHubContributions(username, token, showCurrentWeekOnly, weekStartDay);
+                let counts = null;
+                let cachedResult = null;
+
+                try {
+                    // Fetch commit data from the configured service
+                    counts = serviceType === SERVICE_TYPE_GITEA
+                        ? await fetchGiteaContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
+                        : serviceType === SERVICE_TYPE_GITLAB
+                            ? await fetchGitLabContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
+                            : await fetchGitHubContributions(username, token, showCurrentWeekOnly, weekStartDay);
+
+                    if (!counts || counts.length !== 7) {
+                        throw new Error('Live fetch did not return a valid 7-day count array.');
+                    }
+
+                    await this._cacheService.save(cacheKey, cacheContext, counts);
+                } catch (e) {
+                    logError(e, 'Weekly Commits Extension: Live fetch failed, trying cache fallback');
+
+                    cachedResult = await this._cacheService.load(cacheKey);
+                    if (cachedResult) {
+                        counts = cachedResult.counts;
+                    }
+                }
 
                 // Double-check boxes still exist (user might have disabled extension)
                 if (!this._boxes || !this._boxes.length) {
@@ -467,7 +549,10 @@ const Indicator = GObject.registerClass(
                     //Update both the boxes and the dropdown menu
                     const dates = getDates(false, showCurrentWeekOnly, weekStartDay);
 
-                    this._updateCommitInfoSection(dates, counts);
+                    this._updateCommitInfoSection(dates, counts, {
+                        isCached: Boolean(cachedResult),
+                        cachedAt: cachedResult?.updatedAt || null,
+                    });
 
                     // Update each box with its commit count and styling
                     counts.forEach((count, index) => {
@@ -583,6 +668,8 @@ const Indicator = GObject.registerClass(
                 }
                 this._separator = null;
             }
+
+            this._cacheStatusItem = null;
         }
 
         _setDefaultBoxAppearance() {
@@ -628,7 +715,7 @@ const Indicator = GObject.registerClass(
 
             this._clearCommitInfoItems();
             this._boxes = null;
-            this._cache = null;
+            this._cacheService = null;
             this._commitItems = null;
 
             super.destroy();

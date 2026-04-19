@@ -29,6 +29,7 @@
 - 🖱️ **Interactive Popup**: Click to see detailed daily commit counts
 - ⚙️ **Easy Configuration**: Simple GUI preferences for GitHub credentials and settings
 - 🔄 **Auto-sync**: Configurable intervals to keep your data fresh
+- 💾 **Offline Cache Fallback**: Stores the last successful commit data locally and reuses it when network/API requests fail
 - 📍 **Flexible Positioning**: Place the widget anywhere on your top bar
 
 ### 🎨 Theming & Customization
@@ -70,7 +71,7 @@
 
 ### System Requirements
 - GNOME Shell 46, 47, or 48
-- Internet connection for GitHub API access
+- Internet connection for live API updates (last successful data is cached for offline fallback)
 
 ## ⚙️ Configuration
 
@@ -191,6 +192,11 @@ If you find Weekly Commits useful, consider supporting its development:
 - Ensure your Personal Access Token has proper permissions
 - Check your internet connection
 - Look for error messages in `journalctl -f` while testing
+
+**Seeing cached data while offline?**
+- This is expected: if live fetch fails, Weekly Commits shows your last successful 7-day data.
+- Cache file location: `$XDG_CACHE_HOME/weekly-commits@funinkina.is-a.dev/commits-cache-v1.json` (usually `~/.cache/weekly-commits@funinkina.is-a.dev/commits-cache-v1.json`).
+- You can safely delete the cache file at any time; it will be recreated automatically after the next successful fetch.
 
 **Widget not appearing in top bar?**
 - Make sure the extension is enabled in GNOME Extensions app
