@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/github/stars/funinkina/weekly-commits" alt="GitHub stars" />
     <img src="https://img.shields.io/github/issues/funinkina/weekly-commits" alt="GitHub issues" />
     <img src="https://img.shields.io/github/last-commit/funinkina/weekly-commits" alt="Last commit" />
-    <img src="https://img.shields.io/badge/GNOME%20Shell-46%20|%2047%20|%2048-blue" alt="GNOME Shell Version" />
+    <img src="https://img.shields.io/badge/GNOME%20Shell-46%20|%2047%20|%2048|%2049|%2050-blue" alt="GNOME Shell Version" />
   </p>
 </div>
 
