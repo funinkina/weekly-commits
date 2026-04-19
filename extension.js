@@ -39,7 +39,7 @@ const THEME_NAMES = {
     leftPad: "@left_pad",         // Grayscale theme inspired by the infamous npm package
     dracula: "Dracula",           // Popular dark theme with purple/pink accents
     blue: "Blue",                 // Cool blue gradient theme
-    panda: "Panda 🐼",            // Black and white with colorful accents
+    panda: "Panda",               // Black and white with colorful accents
     sunny: "Sunny",               // Bright yellow/gold theme
     pink: "Pink",                 // Pink/magenta gradient theme
     YlGnBu: "YlGnBu",            // Yellow-Green-Blue scientific colormap
@@ -197,6 +197,12 @@ const DATE_FORMAT = { month: 'short' };        // How dates appear in the menu
 const DEFAULT_OPACITY = 50;                    // Base opacity for boxes with no commits
 const MAX_OPACITY_INCREASE = 205;              // Maximum opacity boost for active boxes
 const OPACITY_PER_COMMIT = 20;                 // How much opacity increases per commit
+const POPUP_HEADER_ICON_SIZE = 16;
+const POPUP_ACTION_ICON_SIZE = 16;
+const POPUP_HEADER_FONT_SIZE = 14;
+const POPUP_TEXT_COLOR = 'rgba(255, 255, 255, 0.96)';
+const POPUP_TABLE_META_COLOR = 'rgba(255, 255, 255, 0.68)';
+const POPUP_COUNT_COLUMN_MIN_WIDTH = 64;
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
@@ -276,6 +282,7 @@ const Indicator = GObject.registerClass(
         _setupMenuItems() {
             // Add "Refresh Now" button to the dropdown menu
             const refreshItem = new PopupMenu.PopupMenuItem(_('Refresh Now'));
+            this._addIconToMenuItem(refreshItem, 'view-refresh-symbolic');
             refreshItem.connect('activate', () => {
                 // Show user we're working on it
                 refreshItem.label.text = _('Refreshing...');
@@ -293,10 +300,101 @@ const Indicator = GObject.registerClass(
 
             // Add "Settings" button to open extension preferences
             const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
+            this._addIconToMenuItem(settingsItem, 'preferences-system-symbolic');
             settingsItem.connect('activate', () => {
                 this._openPreferences()
             });
             this.menu.addMenuItem(settingsItem);
+        }
+
+        _addIconToMenuItem(item, iconName) {
+            const icon = new St.Icon({
+                icon_name: iconName,
+                style_class: 'popup-menu-icon',
+                icon_size: POPUP_ACTION_ICON_SIZE,
+            });
+
+            item.insert_child_at_index(icon, 1);
+        }
+
+        _getProviderName() {
+            switch (this._preferences.serviceType) {
+                case SERVICE_TYPE_GITEA:
+                    return 'Gitea';
+                case SERVICE_TYPE_GITLAB:
+                    return 'GitLab';
+                default:
+                    return 'GitHub';
+            }
+        }
+
+        _getProviderIconName() {
+            switch (this._preferences.serviceType) {
+                case SERVICE_TYPE_GITEA:
+                    return 'network-server-symbolic';
+                case SERVICE_TYPE_GITLAB:
+                    return 'folder-remote-symbolic';
+                default:
+                    return 'applications-internet-symbolic';
+            }
+        }
+
+        _addPopupHeader(section) {
+            const headerBox = new St.BoxLayout({
+                style_class: 'popup-menu-item',
+                reactive: false,
+                can_focus: false,
+                track_hover: false,
+                style: 'padding: 6px 12px 8px 12px; spacing: 8px;',
+            });
+
+            const providerIcon = new St.Icon({
+                icon_name: this._getProviderIconName(),
+                icon_size: POPUP_HEADER_ICON_SIZE,
+                style_class: 'popup-menu-icon',
+                y_align: Clutter.ActorAlign.CENTER,
+                style: `color: ${POPUP_TEXT_COLOR};`,
+            });
+
+            const title = new St.Label({
+                text: `${_('Weekly Commits')} · ${this._getProviderName()}`,
+                x_align: Clutter.ActorAlign.START,
+                y_align: Clutter.ActorAlign.CENTER,
+                style: `font-size: ${POPUP_HEADER_FONT_SIZE}px; font-weight: 700; color: ${POPUP_TEXT_COLOR};`,
+            });
+
+            headerBox.add_child(providerIcon);
+            headerBox.add_child(title);
+            section.box.add_child(headerBox);
+        }
+
+        _addCommitTableHeader(section) {
+            const headerRow = new St.BoxLayout({
+                style_class: 'popup-menu-item',
+                reactive: false,
+                can_focus: false,
+                track_hover: false,
+                style: 'padding: 0 12px 4px 12px; spacing: 6px;',
+            });
+
+            const dateHeader = new St.Label({
+                text: _('Date'),
+                x_expand: true,
+                x_align: Clutter.ActorAlign.START,
+                y_align: Clutter.ActorAlign.CENTER,
+                style: `font-size: 11px; font-weight: 600; color: ${POPUP_TABLE_META_COLOR};`,
+            });
+
+            const commitHeader = new St.Label({
+                text: _('Commits'),
+                x_align: Clutter.ActorAlign.END,
+                y_align: Clutter.ActorAlign.CENTER,
+                style: `min-width: ${POPUP_COUNT_COLUMN_MIN_WIDTH}px; text-align: right; font-size: 11px; font-weight: 600; color: ${POPUP_TABLE_META_COLOR};`,
+            });
+
+            headerRow.add_child(dateHeader);
+            headerRow.add_child(commitHeader);
+            section.box.add_child(headerRow);
         }
 
         async _openPreferences() {
@@ -368,17 +466,17 @@ const Indicator = GObject.registerClass(
                 date.getMonth() === today.getMonth() &&
                 date.getFullYear() === today.getFullYear();
 
-            const commitText = count === 1 ? 'commit' : 'commits';
-
             if (isToday) {
                 return {
-                    label: `Today: ${count} ${commitText}`,
+                    dateText: 'Today',
+                    countText: `${count}`,
                 };
             } else {
                 const monthName = date.toLocaleString('en-US', DATE_FORMAT);
                 const day = date.getDate();
                 return {
-                    label: `${monthName} ${day}: ${count} ${commitText}`,
+                    dateText: `${monthName} ${day}`,
+                    countText: `${count}`,
                 };
             }
         }
@@ -405,16 +503,27 @@ const Indicator = GObject.registerClass(
             if (!this._commitSection) {
                 this._commitSection = new PopupMenu.PopupMenuSection();
                 this.menu.addMenuItem(this._commitSection, 0);
+                this._addPopupHeader(this._commitSection);
+                this._addCommitTableHeader(this._commitSection);
 
                 this._commitItems = [];
 
                 for (let i = 0; i < 7; i++) {
-                    const textItem = new St.Label({
+                    const dateLabel = new St.Label({
                         text: '',
                         style_class: 'commit-text-item',
+                        x_expand: true,
                         x_align: Clutter.ActorAlign.START,
                         y_align: Clutter.ActorAlign.CENTER,
-                        style: 'font-family: monospace;'
+                        style: `color: ${POPUP_TEXT_COLOR};`
+                    });
+
+                    const countLabel = new St.Label({
+                        text: '',
+                        style_class: 'commit-text-item',
+                        x_align: Clutter.ActorAlign.END,
+                        y_align: Clutter.ActorAlign.CENTER,
+                        style: `min-width: ${POPUP_COUNT_COLUMN_MIN_WIDTH}px; text-align: right; color: ${POPUP_TEXT_COLOR}; font-weight: 600;`
                     });
 
                     const itemBin = new St.BoxLayout({
@@ -422,12 +531,13 @@ const Indicator = GObject.registerClass(
                         reactive: false,
                         can_focus: false,
                         track_hover: false,
-                        style: 'padding-top: 2px; padding-bottom: 2px;'
+                        style: 'padding: 2px 12px; spacing: 6px;'
                     });
 
-                    itemBin.add_child(textItem);
+                    itemBin.add_child(dateLabel);
+                    itemBin.add_child(countLabel);
                     this._commitSection.box.add_child(itemBin);
-                    this._commitItems.push({ bin: itemBin, label: textItem });
+                    this._commitItems.push({ bin: itemBin, dateLabel, countLabel });
                 }
 
                 const cacheStatusLabel = new St.Label({
@@ -435,7 +545,7 @@ const Indicator = GObject.registerClass(
                     style_class: 'commit-text-item',
                     x_align: Clutter.ActorAlign.START,
                     y_align: Clutter.ActorAlign.CENTER,
-                    style: 'font-style: italic; opacity: 0.85; padding-top: 4px;'
+                    style: `font-style: italic; opacity: 0.85; color: ${POPUP_TEXT_COLOR}; padding-top: 4px;`
                 });
 
                 const cacheStatusBin = new St.BoxLayout({
@@ -443,7 +553,7 @@ const Indicator = GObject.registerClass(
                     reactive: false,
                     can_focus: false,
                     track_hover: false,
-                    style: 'padding-top: 4px; padding-bottom: 2px;'
+                    style: 'padding: 4px 12px 2px 12px;'
                 });
 
                 cacheStatusBin.add_child(cacheStatusLabel);
@@ -460,10 +570,11 @@ const Indicator = GObject.registerClass(
             if (this._commitItems) {
                 dates.forEach((date, index) => {
                     const count = counts[index];
-                    const { label } = this._formatDateWithCommits(date, count);
+                    const { dateText, countText } = this._formatDateWithCommits(date, count);
 
                     if (this._commitItems[index]) {
-                        this._commitItems[index].label.text = label;
+                        this._commitItems[index].dateLabel.text = dateText;
+                        this._commitItems[index].countLabel.text = countText;
                     }
                 });
             }
@@ -685,7 +796,9 @@ const Indicator = GObject.registerClass(
             this._clearCommitInfoItems();
 
             const commitSection = new PopupMenu.PopupMenuSection();
+            this._addPopupHeader(commitSection);
             const item = new PopupMenu.PopupMenuItem(MESSAGES.NO_COMMITS);
+            item.label.style = `color: ${POPUP_TEXT_COLOR};`;
             commitSection.addMenuItem(item);
             this.menu.addMenuItem(commitSection, 0);
             this._commitSection = commitSection;
