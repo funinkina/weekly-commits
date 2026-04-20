@@ -193,7 +193,7 @@ const MESSAGES = {
 };
 
 // Display and animation settings
-const DATE_FORMAT = { month: 'short' };        // How dates appear in the menu
+const DATE_FORMAT = { month: 'long' };        // How dates appear in the menu
 const DEFAULT_OPACITY = 50;                    // Base opacity for boxes with no commits
 const MAX_OPACITY_INCREASE = 205;              // Maximum opacity boost for active boxes
 const OPACITY_PER_COMMIT = 20;                 // How much opacity increases per commit
@@ -202,7 +202,7 @@ const POPUP_ACTION_ICON_SIZE = 16;
 const POPUP_HEADER_FONT_SIZE = 14;
 const POPUP_TEXT_COLOR = 'rgba(255, 255, 255, 0.96)';
 const POPUP_TABLE_META_COLOR = 'rgba(255, 255, 255, 0.68)';
-const POPUP_COUNT_COLUMN_MIN_WIDTH = 64;
+const POPUP_COUNT_COLUMN_MIN_WIDTH = 48;
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
@@ -312,9 +312,15 @@ const Indicator = GObject.registerClass(
                 icon_name: iconName,
                 style_class: 'popup-menu-icon',
                 icon_size: POPUP_ACTION_ICON_SIZE,
+                y_align: Clutter.ActorAlign.CENTER,
+                style: 'margin-left: 8px;',
             });
 
-            item.insert_child_at_index(icon, 1);
+            item.label.x_expand = true;
+            item.label.x_align = Clutter.ActorAlign.START;
+            item.label.y_align = Clutter.ActorAlign.CENTER;
+
+            item.add_child(icon);
         }
 
         _getProviderName() {
@@ -328,42 +334,22 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _getProviderIconName() {
-            switch (this._preferences.serviceType) {
-                case SERVICE_TYPE_GITEA:
-                    return 'network-server-symbolic';
-                case SERVICE_TYPE_GITLAB:
-                    return 'folder-remote-symbolic';
-                default:
-                    return 'applications-internet-symbolic';
-            }
-        }
-
         _addPopupHeader(section) {
             const headerBox = new St.BoxLayout({
                 style_class: 'popup-menu-item',
                 reactive: false,
                 can_focus: false,
                 track_hover: false,
-                style: 'padding: 6px 12px 8px 12px; spacing: 8px;',
-            });
-
-            const providerIcon = new St.Icon({
-                icon_name: this._getProviderIconName(),
-                icon_size: POPUP_HEADER_ICON_SIZE,
-                style_class: 'popup-menu-icon',
-                y_align: Clutter.ActorAlign.CENTER,
-                style: `color: ${POPUP_TEXT_COLOR};`,
+                style: 'padding: 6px 12px 8px 12px;',
             });
 
             const title = new St.Label({
-                text: `${_('Weekly Commits')} · ${this._getProviderName()}`,
+                text: `${_('Commits')} • ${this._getProviderName()}`,
                 x_align: Clutter.ActorAlign.START,
                 y_align: Clutter.ActorAlign.CENTER,
                 style: `font-size: ${POPUP_HEADER_FONT_SIZE}px; font-weight: 700; color: ${POPUP_TEXT_COLOR};`,
             });
 
-            headerBox.add_child(providerIcon);
             headerBox.add_child(title);
             section.box.add_child(headerBox);
         }
@@ -491,7 +477,32 @@ const Indicator = GObject.registerClass(
                 return null;
             }
 
-            return parsedDate.toLocaleString();
+            const now = Date.now();
+            const diffMs = Math.max(0, now - parsedDate.getTime());
+
+            const minute = 60 * 1000;
+            const hour = 60 * minute;
+            const day = 24 * hour;
+            const week = 7 * day;
+            const month = 30 * day;
+            const year = 365 * day;
+
+            const pluralize = (value, unit) => `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+
+            if (diffMs < minute)
+                return 'just now';
+            if (diffMs < hour)
+                return pluralize(Math.floor(diffMs / minute), 'minute');
+            if (diffMs < day)
+                return pluralize(Math.floor(diffMs / hour), 'hour');
+            if (diffMs < week)
+                return pluralize(Math.floor(diffMs / day), 'day');
+            if (diffMs < month)
+                return pluralize(Math.floor(diffMs / week), 'week');
+            if (diffMs < year)
+                return pluralize(Math.floor(diffMs / month), 'month');
+
+            return pluralize(Math.floor(diffMs / year), 'year');
         }
 
         _updateCommitInfoSection(dates, counts, options = {}) {
@@ -583,7 +594,7 @@ const Indicator = GObject.registerClass(
                 if (isCached) {
                     const formattedTimestamp = this._formatCacheTimestamp(cachedAt);
                     this._cacheStatusItem.label.text = formattedTimestamp
-                        ? `Cached on ${formattedTimestamp}`
+                        ? `Cached ${formattedTimestamp}`
                         : 'Cached';
                     this._cacheStatusItem.bin.show();
                 } else {
