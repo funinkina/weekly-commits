@@ -102,12 +102,12 @@ export default class About extends Adw.PreferencesPage {
 
 
         const authorGroup = new Adw.PreferencesGroup({
-            title: _('The Developer')
+            title: _('About Developer')
         });
         this.add(authorGroup);
 
         const moreInfo = new Adw.ActionRow({
-            title: _("Visit Developer's Website"),
+            title: _("Visit My's Website"),
             subtitle: _('Explore funinkina\'s projects, blog, work and more'),
             activatable: true
         });
@@ -147,41 +147,6 @@ export default class About extends Adw.PreferencesPage {
         coffeeRow.add_prefix(coffeeIcon);
         authorGroup.add(coffeeRow);
         this._makeRowClickable(coffeeRow, buyMeCoffeeLink);
-
-        const contributorsGroup = new Adw.PreferencesGroup({
-            title: _('Contributor')
-
-        });
-        this.add(contributorsGroup);
-
-        const contributorRow = new Adw.ActionRow({
-            title: _('Aryan-Techie'),
-            subtitle: _('Developer - github.com/aryan-techie'),
-
-            activatable: true
-        });
-
-        const contributorIcon = new Gtk.Image({
-            icon_name: 'system-users-symbolic'
-        });
-        contributorRow.add_prefix(contributorIcon);
-        contributorsGroup.add(contributorRow);
-        this._makeRowClickable(contributorRow, 'https://aryantechie.com');
-
-        // Sponsor button for Aryan-Techie (below contributor info)
-        const aryanSponsorsLink = 'https://github.com/sponsors/Aryan-Techie';
-        const aryanSponsorsRow = new Adw.ActionRow({
-            title: _('Sponsor Aryan-Techie'),
-            subtitle: _('Support the contributor on GitHub Sponsors'),
-            activatable: true
-        });
-
-        const aryanSponsorsIcon = new Gtk.Image({
-            icon_name: 'starred-symbolic',
-        });
-        aryanSponsorsRow.add_prefix(aryanSponsorsIcon);
-        contributorsGroup.add(aryanSponsorsRow);
-        this._makeRowClickable(aryanSponsorsRow, aryanSponsorsLink);
 
         // Links section moved to bottom
         const linksGroup = new Adw.PreferencesGroup({
