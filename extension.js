@@ -13,206 +13,14 @@ import { fetchContributions as fetchGiteaContributions } from './helpers/giteaSe
 import { fetchContributions as fetchGitLabContributions } from './helpers/gitlabService.js';
 import { ExtensionSettings } from './helpers/settings.js';
 import { ContributionCache } from './helpers/cacheService.js';
-
-// Visual constants for the commit boxes in the top bar
-const BOX_SIZE = 14;        // Size of each commit box in pixels
-const BOX_MARGIN = 4;       // Space between each box
-const BORDER_RADIUS = 3;    // Rounded corners for the boxes
-const COLORS = {
-    ACTIVE: '#4CAF50',      // Green color for days with commits
-    INACTIVE: '#8e8e8e',    // Gray color for days without commits
-    DEFAULT: '#888888'      // Default fallback color
-};
-
-// Service type enum values (must match gschema.xml)
-const SERVICE_TYPE_GITHUB = 0;
-const SERVICE_TYPE_GITEA = 1;
-const SERVICE_TYPE_GITLAB = 2;
-
-// All available color themes - these match what users see in settings
-const THEME_NAMES = {
-    standard: "GitHub",             // Classic GitHub green theme
-    classic: "GitHub Classic",     // Original GitHub contribution colors
-    githubDark: "GitHub Dark",     // GitHub's dark mode colors
-    halloween: "Halloween",        // Orange and dark spooky colors
-    teal: "Teal",                 // Calming teal/aqua colors
-    leftPad: "@left_pad",         // Grayscale theme inspired by the infamous npm package
-    dracula: "Dracula",           // Popular dark theme with purple/pink accents
-    blue: "Blue",                 // Cool blue gradient theme
-    panda: "Panda",               // Black and white with colorful accents
-    sunny: "Sunny",               // Bright yellow/gold theme
-    pink: "Pink",                 // Pink/magenta gradient theme
-    YlGnBu: "YlGnBu",            // Yellow-Green-Blue scientific colormap
-    solarizedDark: 'Solarized Dark',   // Popular developer theme (dark)
-    solarizedLight: 'Solarized Light', // Popular developer theme (light)
-    catpuccin: 'Catpuccin Frappe'       // Green theme Catpuccin Frappe (dark)
-};
-
-const THEMES = {
-    standard: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#216e39",
-        grade3: "#30a14e",
-        grade2: "#40c463",
-        grade1: "#9be9a8",
-        grade0: "#ebedf0"
-    },
-    classic: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#196127",
-        grade3: "#239a3b",
-        grade2: "#7bc96f",
-        grade1: "#c6e48b",
-        grade0: "#ebedf0"
-    },
-    githubDark: {
-        text: "#ffffff",
-        meta: "#dddddd",
-        grade4: "#27d545",
-        grade3: "#10983d",
-        grade2: "#00602d",
-        grade1: "#003820",
-        grade0: "#161b22"
-    },
-    halloween: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#03001C",
-        grade3: "#FE9600",
-        grade2: "#FFC501",
-        grade1: "#FFEE4A",
-        grade0: "#ebedf0"
-    },
-    teal: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#458B74",
-        grade3: "#66CDAA",
-        grade2: "#76EEC6",
-        grade1: "#7FFFD4",
-        grade0: "#ebedf0"
-    },
-    leftPad: {
-        text: "#ffffff",
-        meta: "#999999",
-        grade4: "#F6F6F6",
-        grade3: "#DDDDDD",
-        grade2: "#A5A5A5",
-        grade1: "#646464",
-        grade0: "#2F2F2F"
-    },
-    dracula: {
-        text: "#f8f8f2",
-        meta: "#666666",
-        grade4: "#ff79c6",
-        grade3: "#bd93f9",
-        grade2: "#6272a4",
-        grade1: "#44475a",
-        grade0: "#282a36"
-    },
-    blue: {
-        text: "#C0C0C0",
-        meta: "#666666",
-        grade4: "#4F83BF",
-        grade3: "#416895",
-        grade2: "#344E6C",
-        grade1: "#263342",
-        grade0: "#222222"
-    },
-    panda: {
-        text: "#E6E6E6",
-        meta: "#676B79",
-        grade4: "#FF4B82",
-        grade3: "#19f9d8",
-        grade2: "#6FC1FF",
-        grade1: "#34353B",
-        grade0: "#242526"
-    },
-    sunny: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#a98600",
-        grade3: "#dab600",
-        grade2: "#e9d700",
-        grade1: "#f8ed62",
-        grade0: "#fff9ae"
-    },
-    pink: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#61185f",
-        grade3: "#a74aa8",
-        grade2: "#ca5bcc",
-        grade1: "#e48bdc",
-        grade0: "#ebedf0"
-    },
-    YlGnBu: {
-        text: "#000000",
-        meta: "#666666",
-        grade4: "#253494",
-        grade3: "#2c7fb8",
-        grade2: "#41b6c4",
-        grade1: "#a1dab4",
-        grade0: "#ebedf0"
-    },
-    solarizedDark: {
-        text: "#93a1a1",
-        meta: "#586e75",
-        grade4: "#d33682",
-        grade3: "#b58900",
-        grade2: "#2aa198",
-        grade1: "#268bd2",
-        grade0: "#073642"
-    },
-    solarizedLight: {
-        text: "#586e75",
-        meta: "#93a1a1",
-        grade4: "#6c71c4",
-        grade3: "#dc322f",
-        grade2: "#cb4b16",
-        grade1: "#b58900",
-        grade0: "#eee8d5"
-    },
-    catpuccin: {
-        text: "#c6d0f5",
-        meta: "#a5adce",
-        grade4: "#5f9f57",
-        grade3: "#81b96f",
-        grade2: "#a6d189",
-        grade1: "#d4f8c4",
-        grade0: "#303446"
-    }
-};
-
-
-// Commit count thresholds for grade-based coloring
-const COMMIT_THRESHOLDS = {
-    grade1: 1,  // 1-2 commits
-    grade2: 3,  // 3-5 commits  
-    grade3: 6,  // 6-10 commits
-    grade4: 11  // 11+ commits
-};
-
-const MESSAGES = {
-    NO_DATA: 'No data available',
-    NO_COMMITS: 'No commit data available',
-    MISSING_CREDENTIALS: 'Missing GitHub username or token',
-    PREFS_ERROR: 'Failed to open extension preferences.'
-};
-
-// Display and animation settings
-const DATE_FORMAT = { month: 'long' };        // How dates appear in the menu
-const DEFAULT_OPACITY = 50;                    // Base opacity for boxes with no commits
-const MAX_OPACITY_INCREASE = 205;              // Maximum opacity boost for active boxes
-const OPACITY_PER_COMMIT = 20;                 // How much opacity increases per commit
-const POPUP_HEADER_ICON_SIZE = 16;
-const POPUP_ACTION_ICON_SIZE = 16;
-const POPUP_HEADER_FONT_SIZE = 14;
-const POPUP_TEXT_COLOR = 'rgba(255, 255, 255, 0.96)';
-const POPUP_TABLE_META_COLOR = 'rgba(255, 255, 255, 0.68)';
-const POPUP_COUNT_COLUMN_MIN_WIDTH = 48;
+import {
+    BOX_SIZE, BOX_MARGIN, BORDER_RADIUS, COLORS,
+    DATE_FORMAT, DEFAULT_OPACITY, MAX_OPACITY_INCREASE, OPACITY_PER_COMMIT,
+    POPUP_ACTION_ICON_SIZE, POPUP_HEADER_FONT_SIZE, POPUP_TEXT_COLOR,
+    POPUP_TABLE_META_COLOR, POPUP_COUNT_COLUMN_MIN_WIDTH,
+    SERVICE_TYPE_GITEA, SERVICE_TYPE_GITLAB,
+    COMMIT_THRESHOLDS, MESSAGES, THEMES, THEME_KEYS,
+} from './helpers/constants.js';
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
@@ -276,7 +84,7 @@ const Indicator = GObject.registerClass(
                     style_class: 'commit-box',
                     height: BOX_SIZE,
                     width: BOX_SIZE,
-                    style: this._getBoxStyle(COLORS.DEFAULT, true), // Start with empty styling
+                    style: this._getBoxStyle(COLORS.DEFAULT), // Start with empty styling
                     opacity: DEFAULT_OPACITY,
                 });
 
@@ -402,7 +210,7 @@ const Indicator = GObject.registerClass(
             }
         }
 
-        _getBoxStyle(bgColor, isEmpty = false) {
+        _getBoxStyle(bgColor) {
             // Create the CSS styling for each commit activity box
             let style = `background-color: ${bgColor}; width: ${BOX_SIZE}px; height: ${BOX_SIZE}px; border-radius: ${BORDER_RADIUS}px;`;
 
@@ -413,47 +221,28 @@ const Indicator = GObject.registerClass(
         }
 
         _getCommitGrade(count) {
-            // Determine how "intense" the color should be based on commit count
-            // This follows GitHub's contribution graph logic
-            if (count === 0) return 'grade0';                              // No commits = lightest/empty
-            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';         // 1-2 commits = light
-            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';         // 3-5 commits = medium
-            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';         // 6-10 commits = dark
-            return 'grade4';                                                // 11+ commits = darkest
+            // Determine how "intense" the color should be based on commit count.
+            // Follows GitHub's contribution graph logic.
+            if (count === 0) return 'grade0';                       // no commits = empty
+            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';  // 1-2 commits
+            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';  // 3-5 commits
+            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';  // 6-10 commits
+            return 'grade4';                                        // 11+ commits
         }
 
         _getThemedColor(count, themeName, colorMode) {
-            // Get the color scheme for the current theme
-            const theme = THEMES[themeName] || THEMES.standard;
-
-            if (colorMode === 'grade') {
-                // Grade mode: different colors for different activity levels (like GitHub)
-                const grade = this._getCommitGrade(count);
-                return theme[grade];
-            } else {
-                // Opacity mode: same color for all, just varies transparency
-                return count > 0 ? theme.grade3 : theme.grade0;
-            }
-        }
-
-        _getCommitGrade(count) {
-            if (count === 0) return 'grade0';
-            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';
-            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';
-            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';
-            return 'grade4';
-        }
-
-        _getThemedColor(count, themeName, colorMode) {
+            // The 'custom' theme is generated from the user's accent color;
+            // every other theme comes from the static THEMES table.
             const theme = themeName === 'custom'
                 ? this._buildCustomTheme(this._preferences.customAccentColor)
                 : (THEMES[themeName] || THEMES.standard);
 
             if (colorMode === 'grade') {
+                // Grade mode: distinct color per activity level (like GitHub).
                 const grade = this._getCommitGrade(count);
                 return theme[grade];
             } else {
-                // Opacity mode - use grade1 color as base for active, grade0 for inactive
+                // Opacity mode: single base color; transparency varies in _setBoxAppearance.
                 return count > 0 ? theme.grade3 : theme.grade0;
             }
         }
@@ -528,24 +317,19 @@ const Indicator = GObject.registerClass(
         }
 
         _formatDateWithCommits(date, count) {
-            const today = new Date();
-            const isToday = date.getDate() === today.getDate() &&
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear();
-
-            if (isToday) {
+            if (this._isToday(date)) {
                 return {
                     dateText: 'Today',
                     countText: `${count}`,
                 };
-            } else {
-                const monthName = date.toLocaleString('en-US', DATE_FORMAT);
-                const day = date.getDate();
-                return {
-                    dateText: `${monthName} ${day}`,
-                    countText: `${count}`,
-                };
             }
+
+            const monthName = date.toLocaleString('en-US', DATE_FORMAT);
+            const day = date.getDate();
+            return {
+                dateText: `${monthName} ${day}`,
+                countText: `${count}`,
+            };
         }
 
         _formatCacheTimestamp(isoTimestamp) {
@@ -738,7 +522,7 @@ const Indicator = GObject.registerClass(
                         throw new Error('Live fetch did not return a valid 7-day count array.');
                     }
 
-                    const cacheSaved = await cacheService.save(cacheKey, cacheContext, counts);
+                    await cacheService.save(cacheKey, cacheContext, counts);
                 } catch (e) {
                     logError(e, 'Weekly Commits Extension: Live fetch failed, trying cache fallback');
 
@@ -786,7 +570,6 @@ const Indicator = GObject.registerClass(
 
             // Set up the next automatic refresh
             this._scheduleNextRefresh();
-            return Promise.resolve();
         }
 
         _isToday(date) {
@@ -798,13 +581,8 @@ const Indicator = GObject.registerClass(
 
         _setBoxAppearance(box, count = 0, highlight = false) {
 
-            // Get current theme settings - map enum index to theme key according to schema
-            const themeKeys = [
-                'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad',
-                'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu',
-                'solarizedDark', 'solarizedLight', 'catpuccin', 'custom'
-            ];
-            const currentThemeName = themeKeys[this._preferences.themeName] || 'standard';
+            // Map the stored theme enum index to its key (order defined in helpers/constants.js)
+            const currentThemeName = THEME_KEYS[this._preferences.themeName] || 'standard';
 
             // Convert user's color mode preference (number from settings) to mode name
             const colorModeNames = ['opacity', 'grade'];
@@ -830,11 +608,11 @@ const Indicator = GObject.registerClass(
 
             if (highlight) {
                 box.opacity = opacity;
-                box.style = `${this._getBoxStyle(color, isEmpty)} border: 2px solid rgba(255, 255, 255, 0.6); box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);`;
+                box.style = `${this._getBoxStyle(color)} border: 2px solid rgba(255, 255, 255, 0.6); box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);`;
             } else {
                 // Regular days just get the themed color and opacity
                 box.opacity = opacity;
-                box.style = this._getBoxStyle(color, isEmpty);
+                box.style = this._getBoxStyle(color);
             }
         }
 

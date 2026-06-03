@@ -3,6 +3,20 @@ import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 
 /**
+ * Format a Date as a local-timezone YYYY-MM-DD string.
+ * Local time is used deliberately so all services agree on day boundaries
+ * regardless of the user's timezone.
+ * @param {Date} date
+ * @returns {string}
+ */
+export function toLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
  * Get the dates for display based on settings
  * @param {boolean} asISOString - Whether to return dates as ISO strings or Date objects
  * @param {boolean} showCurrentWeekOnly - Whether to show only the current week
@@ -24,29 +38,13 @@ export function getDates(asISOString = true, showCurrentWeekOnly = false, weekSt
         for (let i = 0; i < 7; i++) {
             const d = new Date(weekStart);
             d.setDate(weekStart.getDate() + i);
-
-            if (asISOString) {
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                dates.push(`${year}-${month}-${day}`);
-            } else {
-                dates.push(d);
-            }
+            dates.push(asISOString ? toLocalDateString(d) : d);
         }
     } else {
         for (let i = 6; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-
-            if (asISOString) {
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                dates.push(`${year}-${month}-${day}`);
-            } else {
-                dates.push(d);
-            }
+            dates.push(asISOString ? toLocalDateString(d) : d);
         }
     }
 

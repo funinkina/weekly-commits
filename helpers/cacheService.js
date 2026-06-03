@@ -2,8 +2,7 @@
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 
-const CACHE_VERSION = 1;
-const CACHE_FILENAME = 'commits-cache-v1.json';
+import { CACHE_VERSION, CACHE_FILENAME } from './constants.js';
 
 function normalizeInstanceUrl(value = '') {
     return value.trim().replace(/\/+$/, '').toLowerCase();

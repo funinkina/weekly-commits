@@ -4,10 +4,9 @@ import Gdk from 'gi://Gdk';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-// Service type enum values (must match gschema.xml)
-const SERVICE_TYPE_GITHUB = 0;
-const SERVICE_TYPE_GITEA = 1;
-const SERVICE_TYPE_GITLAB = 2;
+import {
+    SERVICE_TYPE_GITHUB, SERVICE_TYPE_GITEA, SERVICE_TYPE_GITLAB, THEME_KEYS,
+} from './helpers/constants.js';
 
 export default class WeeklyCommitsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -155,29 +154,32 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             settings.set_enum('color-mode', colorModeRow.selected));
         group.add(colorModeRow);
 
-        const themes = [
-            { key: 'standard', label: _('GitHub') },
-            { key: 'classic', label: _('GitHub Classic') },
-            { key: 'githubDark', label: _('GitHub Dark') },
-            { key: 'halloween', label: _('Halloween') },
-            { key: 'teal', label: _('Teal') },
-            { key: 'leftPad', label: _('@left_pad') },
-            { key: 'dracula', label: _('Dracula') },
-            { key: 'blue', label: _('Blue') },
-            { key: 'panda', label: _('Panda 🐼') },
-            { key: 'sunny', label: _('Sunny') },
-            { key: 'pink', label: _('Pink') },
-            { key: 'YlGnBu', label: _('YlGnBu') },
-            { key: 'solarizedDark', label: _('Solarized Dark') },
-            { key: 'solarizedLight', label: _('Solarized Light') },
-            { key: 'catpuccin', label: _('Catpuccin') },
-            { key: 'custom', label: _('Custom') },
-        ];
+        // Labels keyed by theme key. The display order comes solely from
+        // THEME_KEYS (which mirrors the schema enum), so ordering lives in one
+        // place. Literals stay inside _() here for gettext extraction.
+        const themeLabels = {
+            standard: _('GitHub'),
+            classic: _('GitHub Classic'),
+            githubDark: _('GitHub Dark'),
+            halloween: _('Halloween'),
+            teal: _('Teal'),
+            leftPad: _('@left_pad'),
+            dracula: _('Dracula'),
+            blue: _('Blue'),
+            panda: _('Panda 🐼'),
+            sunny: _('Sunny'),
+            pink: _('Pink'),
+            YlGnBu: _('YlGnBu'),
+            solarizedDark: _('Solarized Dark'),
+            solarizedLight: _('Solarized Light'),
+            catpuccin: _('Catpuccin'),
+            custom: _('Custom'),
+        };
 
         const themeRow = new Adw.ComboRow({
             title: _('Color Theme'),
             subtitle: _('Select a color theme for commit visualization'),
-            model: this._makeStringList(themes.map(t => t.label)),
+            model: this._makeStringList(THEME_KEYS.map(key => themeLabels[key])),
             selected: settings.get_enum('theme-name'),
         });
         themeRow.connect('notify::selected', () =>
@@ -210,7 +212,7 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         accentRow.activatable_widget = colorBtn;
         group.add(accentRow);
 
-        const CUSTOM_THEME_INDEX = themes.findIndex(t => t.key === 'custom');
+        const CUSTOM_THEME_INDEX = THEME_KEYS.indexOf('custom');
         const updateAccentVisible = () => {
             accentRow.visible = themeRow.selected === CUSTOM_THEME_INDEX;
         };
