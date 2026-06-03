@@ -1,13 +1,13 @@
 <div align="center">
-  <img src="weekly-commits-logo.png" alt="Weekly Commits Logo" width="120" />
+  <img width="100" height="100" alt="weekly-commits-logo" src="https://github.com/user-attachments/assets/764a3bb2-367c-4f39-851c-67a781211451" />
   <h1>Weekly Commits</h1>
   <p><strong>A GNOME Shell extension to visualize your GitHub contributions in the top bar</strong></p>
   
-  <img src="screenshot.png" alt="Weekly Commits Extension Screenshot" />
-  
+  <img width="307" height="97" alt="screenshot" src="https://github.com/user-attachments/assets/9afeaa0e-a5bb-4e46-b938-4d9d717dcbcd" />
+
   <p>
     <a href="https://extensions.gnome.org/extension/8146/weekly-commits/">
-      <img src="https://github.com/andyholmes/gnome-shell-extensions-badge/raw/master/get-it-on-ego.png" alt="Get it on GNOME Extensions" />
+      <img src="https://github.com/andyholmes/gnome-shell-extensions-badge/raw/master/get-it-on-ego.png" alt="Get it on GNOME Extensions" width="200" height="auto"/>
     </a>
   </p>
   
