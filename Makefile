@@ -5,7 +5,7 @@ SCHEMA_SRC = schemas/org.gnome.shell.extensions.weekly-commits.gschema.xml
 SYSTEM_SCHEMA_DIR = /usr/share/glib-2.0/schemas
 
 PACK_NAME = $(UUID).zip
-PACK_FILES = extension.js prefs.js metadata.json helpers icons schemas LICENSE README.md
+PACK_FILES = extension.js prefs.js metadata.json helpers schemas
 
 .PHONY: all install uninstall pack clean enable disable
 
