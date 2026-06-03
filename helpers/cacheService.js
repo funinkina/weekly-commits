@@ -233,8 +233,6 @@ export class ContributionCache {
                 }
             );
         });
-
-        cacheDebugLog(`Cache file write complete: ${this._cachePath}; entries=${Object.keys(cacheData.entries).length}`);
     }
 
     _ensureCacheDirectory() {

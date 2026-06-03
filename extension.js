@@ -841,15 +841,20 @@ const Indicator = GObject.registerClass(
         _scheduleNextRefresh() {
             if (this._refreshTimeoutId) {
                 GLib.Source.remove(this._refreshTimeoutId);
+                this._refreshTimeoutId = null;
             }
 
             const interval = this._preferences.refreshInterval;
+            // One-shot timer: _updateContributionDisplay() re-arms it at its end,
+            // so the source must not auto-repeat (returning SOURCE_CONTINUE here
+            // while the tail also re-schedules caused duplicate/orphaned sources).
             this._refreshTimeoutId = GLib.timeout_add_seconds(
                 GLib.PRIORITY_DEFAULT,
                 interval,
                 () => {
+                    this._refreshTimeoutId = null;
                     this._updateContributionDisplay();
-                    return GLib.SOURCE_CONTINUE;
+                    return GLib.SOURCE_REMOVE;
                 }
             );
         }
@@ -947,32 +952,29 @@ export default class WeeklyCommitsExtension extends Extension {
         // Wait a bit before creating the indicator to ensure GNOME Shell is ready
         // This prevents issues during login/startup
         this._enableTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
-            if (this._preferences) {
-                this._indicator = new Indicator(this._preferences, this);
-                this._updateIndicatorPosition();
-            }
             this._enableTimeoutId = null;
+            this._updateIndicatorPosition();
             return GLib.SOURCE_REMOVE; // Don't repeat this timeout
         });
     }
 
     _updateIndicatorPosition() {
-        // Don't do anything if there's no indicator yet
-        if (!this._indicator) return;
+        // Nothing to do once disabled (preferences torn down)
+        if (!this._preferences) return;
+
+        // Remove the old indicator from the panel, if any
+        if (this._indicator) {
+            this._indicator.destroy();
+            this._indicator = null;
+        }
 
         // Convert user's position preference to actual panel position
         const position = ['left', 'center', 'right'][this._preferences.panelPosition] || 'right';
         const index = this._preferences.panelIndex || 0;
 
-        // Remove the old indicator from the panel
-        this._indicator.destroy();
-        this._indicator = null;
-
-        // Create a new indicator in the new position
-        if (this._preferences) {
-            this._indicator = new Indicator(this._preferences, this);
-            Main.panel.addToStatusArea(this.uuid, this._indicator, index, position);
-        }
+        // Create the indicator in the (new) position
+        this._indicator = new Indicator(this._preferences, this);
+        Main.panel.addToStatusArea(this.uuid, this._indicator, index, position);
     }
 
     disable() {
