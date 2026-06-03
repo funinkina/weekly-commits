@@ -1,8 +1,7 @@
-"use strict";
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 
-import { getDates, toLocalDateString } from './githubService.js';
+import { getDates, toLocalDateString } from './dateUtils.js';
 import { session, USER_AGENT } from './http.js';
 
 const PER_PAGE = 100;   // GitLab's maximum page size for the events endpoint
@@ -47,7 +46,7 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
         if (token) {
             message.request_headers.append('PRIVATE-TOKEN', token);
         }
-        message.request_headers.append('Content-Type', 'application/json');
+        message.request_headers.append('Accept', 'application/json');
         message.request_headers.append('User-Agent', USER_AGENT);
 
         let responseBytes;

@@ -7,6 +7,7 @@ import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/
 import {
     SERVICE_TYPE_GITHUB, SERVICE_TYPE_GITEA, SERVICE_TYPE_GITLAB, THEME_KEYS,
 } from './helpers/constants.js';
+import { rgbToHex } from './helpers/colorUtils.js';
 
 export default class WeeklyCommitsPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
@@ -189,7 +190,7 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         // Custom theme: pick one accent color; the intensity ramp is generated automatically
         const accentRow = new Adw.ActionRow({
             title: _('Custom Accent Color'),
-            subtitle: _('Pick one color; the intensity ramp is generated automatically'),
+            subtitle: _('Pick one color, the intensity ramp is generated automatically'),
         });
 
         const colorBtn = new Gtk.ColorDialogButton({
@@ -203,8 +204,11 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
 
         colorBtn.connect('notify::rgba', () => {
             const c = colorBtn.get_rgba();
-            const hex = '#' + [c.red, c.green, c.blue]
-                .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
+            const hex = rgbToHex(
+                Math.round(c.red * 255),
+                Math.round(c.green * 255),
+                Math.round(c.blue * 255)
+            );
             settings.set_string('custom-accent-color', hex);
         });
 

@@ -118,4 +118,12 @@ export class ExtensionSettings {
     disconnectChanged(handlerId) {
         this._settings.disconnect(handlerId);
     }
+
+    connectSettingChanged(key, callback) {
+        return this._settings.connect(`changed::${key}`, callback);
+    }
+
+    disconnectSettingChanged(handlerId) {
+        this._settings.disconnect(handlerId);
+    }
 }

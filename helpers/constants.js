@@ -1,16 +1,12 @@
-"use strict";
-
 // Central definition of every shared constant in the extension. This module
 // imports nothing GNOME-specific, so it is safe to import from both the shell
 // process (extension.js) and the preferences process (prefs.js).
 
 // --- Commit box visuals (top bar) ---
-export const BOX_SIZE = 14;        // Size of each commit box in pixels
-export const BOX_MARGIN = 4;       // Space between each box
-export const BORDER_RADIUS = 3;    // Rounded corners for the boxes
-export const COLORS = {
-    DEFAULT: '#888888'             // Default fallback color for empty boxes
-};
+export const BOX_SIZE = 14;
+export const BOX_MARGIN = 4;
+export const BORDER_RADIUS = 3;
+export const DEFAULT_BOX_COLOR = '#888888';
 
 // --- Display & animation ---
 export const DATE_FORMAT = { month: 'long' };  // How dates appear in the menu
@@ -32,10 +28,9 @@ export const SERVICE_TYPE_GITLAB = 2;
 
 // --- Commit count thresholds for grade-based coloring ---
 export const COMMIT_THRESHOLDS = {
-    grade1: 1,  // 1-2 commits
-    grade2: 3,  // 3-5 commits
-    grade3: 6,  // 6-10 commits
-    grade4: 11  // 11+ commits
+    grade2: 3,   // 3–5 commits → grade1 below this
+    grade3: 6,   // 6–10 commits
+    grade4: 11,  // 11+ commits
 };
 
 // --- User-facing messages ---

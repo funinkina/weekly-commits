@@ -8,13 +8,15 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-import { fetchContributions as fetchGitHubContributions, getDates } from './helpers/githubService.js';
+import { fetchContributions as fetchGitHubContributions } from './helpers/githubService.js';
 import { fetchContributions as fetchGiteaContributions } from './helpers/giteaService.js';
 import { fetchContributions as fetchGitLabContributions } from './helpers/gitlabService.js';
+import { getDates } from './helpers/dateUtils.js';
+import { buildCustomTheme } from './helpers/colorUtils.js';
 import { ExtensionSettings } from './helpers/settings.js';
 import { ContributionCache } from './helpers/cacheService.js';
 import {
-    BOX_SIZE, BOX_MARGIN, BORDER_RADIUS, COLORS,
+    BOX_SIZE, BOX_MARGIN, BORDER_RADIUS, DEFAULT_BOX_COLOR,
     DATE_FORMAT, DEFAULT_OPACITY, MAX_OPACITY_INCREASE, OPACITY_PER_COMMIT,
     POPUP_ACTION_ICON_SIZE, POPUP_HEADER_FONT_SIZE, POPUP_TEXT_COLOR,
     POPUP_TABLE_META_COLOR, POPUP_COUNT_COLUMN_MIN_WIDTH,
@@ -28,6 +30,27 @@ const CONTRIBUTION_FETCHERS = {
     [SERVICE_TYPE_GITEA]: fetchGiteaContributions,
     [SERVICE_TYPE_GITLAB]: fetchGitLabContributions,
 };
+
+const COLOR_MODE_NAMES = ['opacity', 'grade'];
+
+function getCommitGrade(count) {
+    if (count === 0) return 'grade0';
+    if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';
+    if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';
+    if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';
+    return 'grade4';
+}
+
+function getThemedColor(count, themeName, colorMode, accentColor) {
+    const theme = themeName === 'custom'
+        ? buildCustomTheme(accentColor)
+        : (THEMES[themeName] || THEMES.standard);
+
+    if (colorMode === 'grade') {
+        return theme[getCommitGrade(count)];
+    }
+    return count > 0 ? theme.grade3 : theme.grade0;
+}
 
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
@@ -91,7 +114,7 @@ const Indicator = GObject.registerClass(
                     style_class: 'commit-box',
                     height: BOX_SIZE,
                     width: BOX_SIZE,
-                    style: this._getBoxStyle(COLORS.DEFAULT), // Start with empty styling
+                    style: this._getBoxStyle(DEFAULT_BOX_COLOR),
                     opacity: DEFAULT_OPACITY,
                 });
 
@@ -126,9 +149,7 @@ const Indicator = GObject.registerClass(
             // Add "Settings" button to open extension preferences
             const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             this._addIconToMenuItem(settingsItem, 'preferences-system-symbolic');
-            settingsItem.connect('activate', () => {
-                this._openPreferences()
-            });
+            settingsItem.connect('activate', () => this._openPreferences());
             this.menu.addMenuItem(settingsItem);
         }
 
@@ -227,106 +248,10 @@ const Indicator = GObject.registerClass(
             return style;
         }
 
-        _getCommitGrade(count) {
-            // Determine how "intense" the color should be based on commit count.
-            // Follows GitHub's contribution graph logic.
-            if (count === 0) return 'grade0';                       // no commits = empty
-            if (count < COMMIT_THRESHOLDS.grade2) return 'grade1';  // 1-2 commits
-            if (count < COMMIT_THRESHOLDS.grade3) return 'grade2';  // 3-5 commits
-            if (count < COMMIT_THRESHOLDS.grade4) return 'grade3';  // 6-10 commits
-            return 'grade4';                                        // 11+ commits
-        }
-
-        _getThemedColor(count, themeName, colorMode) {
-            // The 'custom' theme is generated from the user's accent color;
-            // every other theme comes from the static THEMES table.
-            const theme = themeName === 'custom'
-                ? this._buildCustomTheme(this._preferences.customAccentColor)
-                : (THEMES[themeName] || THEMES.standard);
-
-            if (colorMode === 'grade') {
-                // Grade mode: distinct color per activity level (like GitHub).
-                const grade = this._getCommitGrade(count);
-                return theme[grade];
-            } else {
-                // Opacity mode: single base color; transparency varies in _setBoxAppearance.
-                return count > 0 ? theme.grade3 : theme.grade0;
-            }
-        }
-
-        _buildCustomTheme(accentHex) {
-            // Derive a 4-level intensity ramp from a single accent color by
-            // shifting HSL lightness. grade1 = lightest, grade4 = darkest.
-            const [h, s, l] = this._rgbToHsl(...this._hexToRgb(accentHex || '#40c463'));
-            const clamp = v => Math.max(0, Math.min(1, v));
-            const shade = dl => this._rgbToHex(...this._hslToRgb(h, s, clamp(l + dl)));
-            return {
-                grade0: '#ebedf0',     // unused (empty boxes get a white fill)
-                grade1: shade(+0.25),  // lightest
-                grade2: shade(+0.10),
-                grade3: shade(0),      // accent = base; also used by opacity mode
-                grade4: shade(-0.15),  // darkest
-            };
-        }
-
-        _hexToRgb(hex) {
-            const m = String(hex).replace('#', '');
-            const n = m.length === 3 ? m.split('').map(c => c + c).join('') : m;
-            return [
-                parseInt(n.slice(0, 2), 16),
-                parseInt(n.slice(2, 4), 16),
-                parseInt(n.slice(4, 6), 16),
-            ];
-        }
-
-        _rgbToHsl(r, g, b) {
-            r /= 255; g /= 255; b /= 255;
-            const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h = 0, s = 0;
-            const l = (max + min) / 2;
-            if (max !== min) {
-                const d = max - min;
-                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-                switch (max) {
-                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                    case g: h = (b - r) / d + 2; break;
-                    case b: h = (r - g) / d + 4; break;
-                }
-                h /= 6;
-            }
-            return [h, s, l];
-        }
-
-        _hslToRgb(h, s, l) {
-            let r, g, b;
-            if (s === 0) {
-                r = g = b = l;
-            } else {
-                const hue2rgb = (p, q, t) => {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1 / 6) return p + (q - p) * 6 * t;
-                    if (t < 1 / 2) return q;
-                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-                    return p;
-                };
-                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                const p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1 / 3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1 / 3);
-            }
-            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-        }
-
-        _rgbToHex(r, g, b) {
-            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-        }
-
         _formatDateWithCommits(date, count) {
             if (this._isToday(date)) {
                 return {
-                    dateText: 'Today',
+                    dateText: _('Today'),
                     countText: `${count}`,
                 };
             }
@@ -359,22 +284,22 @@ const Indicator = GObject.registerClass(
             const month = 30 * day;
             const year = 365 * day;
 
-            const pluralize = (value, unit) => `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+            const pluralize = (value, unit) => `${value} ${unit}${value === 1 ? '' : 's'} ${_('ago')}`;
 
             if (diffMs < minute)
-                return 'just now';
+                return _('just now');
             if (diffMs < hour)
-                return pluralize(Math.floor(diffMs / minute), 'minute');
+                return pluralize(Math.floor(diffMs / minute), _('minute'));
             if (diffMs < day)
-                return pluralize(Math.floor(diffMs / hour), 'hour');
+                return pluralize(Math.floor(diffMs / hour), _('hour'));
             if (diffMs < week)
-                return pluralize(Math.floor(diffMs / day), 'day');
+                return pluralize(Math.floor(diffMs / day), _('day'));
             if (diffMs < month)
-                return pluralize(Math.floor(diffMs / week), 'week');
+                return pluralize(Math.floor(diffMs / week), _('week'));
             if (diffMs < year)
-                return pluralize(Math.floor(diffMs / month), 'month');
+                return pluralize(Math.floor(diffMs / month), _('month'));
 
-            return pluralize(Math.floor(diffMs / year), 'year');
+            return pluralize(Math.floor(diffMs / year), _('year'));
         }
 
         _updateCommitInfoSection(dates, counts, options = {}) {
@@ -466,8 +391,8 @@ const Indicator = GObject.registerClass(
                 if (isCached) {
                     const formattedTimestamp = this._formatCacheTimestamp(cachedAt);
                     this._cacheStatusItem.label.text = formattedTimestamp
-                        ? `Cached ${formattedTimestamp}`
-                        : 'Cached';
+                        ? `${_('Cached')} ${formattedTimestamp}`
+                        : _('Cached');
                     this._cacheStatusItem.bin.show();
                 } else {
                     this._cacheStatusItem.label.text = '';
@@ -494,11 +419,6 @@ const Indicator = GObject.registerClass(
                     customInstanceUrl
                 } = this._preferences;
 
-                const cacheService = this._cacheService;
-                if (!cacheService) {
-                    return;
-                }
-
                 const cacheContext = {
                     serviceType,
                     username,
@@ -506,7 +426,7 @@ const Indicator = GObject.registerClass(
                     showCurrentWeekOnly,
                     weekStartDay,
                 };
-                const cacheKey = cacheService.buildKey(cacheContext);
+                const cacheKey = this._cacheService.buildKey(cacheContext);
 
                 // Can't do anything without credentials
                 if (!username || !token) {
@@ -526,11 +446,11 @@ const Indicator = GObject.registerClass(
                         throw new Error('Live fetch did not return a valid 7-day count array.');
                     }
 
-                    await cacheService.save(cacheKey, cacheContext, counts);
+                    await this._cacheService.save(cacheKey, cacheContext, counts);
                 } catch (e) {
                     logError(e, 'Weekly Commits Extension: Live fetch failed, trying cache fallback');
 
-                    cachedResult = await cacheService.load(cacheKey);
+                    cachedResult = await this._cacheService.load(cacheKey);
                     if (cachedResult) {
                         counts = cachedResult.counts;
                     }
@@ -550,22 +470,21 @@ const Indicator = GObject.registerClass(
                         cachedAt: cachedResult?.updatedAt || null,
                     });
 
-                    // Update each box with its commit count and styling
+                    const themeName = THEME_KEYS[this._preferences.themeName] || 'standard';
+                    const colorMode = COLOR_MODE_NAMES[this._preferences.colorMode] || 'opacity';
+                    const accentColor = this._preferences.customAccentColor;
+
                     counts.forEach((count, index) => {
                         if (this._boxes[index]) {
-                            const isToday = this._isToday(dates[index]);
-                            const shouldHighlight = highlightCurrentDay && isToday;
-
-                            this._setBoxAppearance(this._boxes[index], count, shouldHighlight);
+                            const shouldHighlight = highlightCurrentDay && this._isToday(dates[index]);
+                            this._setBoxAppearance(this._boxes[index], count, shouldHighlight, themeName, colorMode, accentColor);
                         }
                     });
                 } else {
-                    // Something went wrong with the API
-                    log('Weekly Commits Extension: Failed to get valid contribution counts.');
+                    console.error('Weekly Commits Extension: Failed to get valid contribution counts.');
                     this._setDefaultBoxAppearance();
                 }
             } catch (e) {
-                // Handle errors
                 logError(e, 'Weekly Commits Extension: Error updating display');
                 if (this._boxes && this._boxes.length) {
                     this._setDefaultBoxAppearance();
@@ -583,17 +502,8 @@ const Indicator = GObject.registerClass(
                 date.getFullYear() === today.getFullYear();
         }
 
-        _setBoxAppearance(box, count = 0, highlight = false) {
-
-            // Map the stored theme enum index to its key (order defined in helpers/constants.js)
-            const currentThemeName = THEME_KEYS[this._preferences.themeName] || 'standard';
-
-            // Convert user's color mode preference (number from settings) to mode name
-            const colorModeNames = ['opacity', 'grade'];
-            const currentColorMode = colorModeNames[this._preferences.colorMode] || 'opacity';
-
-            // Get the appropriate color for this day's commit count
-            let color = this._getThemedColor(count, currentThemeName, currentColorMode);
+        _setBoxAppearance(box, count = 0, highlight = false, themeName = 'standard', colorMode = 'opacity', accentColor = '#40c463') {
+            let color = getThemedColor(count, themeName, colorMode, accentColor);
             const isEmpty = count === 0;
 
             // Special case: empty boxes get a subtle white fill so they're visible on dark backgrounds
@@ -603,11 +513,10 @@ const Indicator = GObject.registerClass(
 
             let opacity = 255; // Default to full opacity
 
-            if (currentColorMode === 'opacity') {
-                // In opacity mode, boxes get more opaque with more commits
+            if (colorMode === 'opacity') {
                 opacity = count > 0
                     ? DEFAULT_OPACITY + Math.min(count * OPACITY_PER_COMMIT, MAX_OPACITY_INCREASE)
-                    : 255; // Empty boxes stay fully opaque so the subtle fill is visible
+                    : 255;
             }
 
             if (highlight) {
@@ -668,8 +577,11 @@ const Indicator = GObject.registerClass(
         }
 
         _setDefaultBoxAppearance() {
+            const themeName = THEME_KEYS[this._preferences.themeName] || 'standard';
+            const colorMode = COLOR_MODE_NAMES[this._preferences.colorMode] || 'opacity';
+            const accentColor = this._preferences.customAccentColor;
             this._boxes.forEach(box => {
-                this._setBoxAppearance(box, 0, false);
+                this._setBoxAppearance(box, 0, false, themeName, colorMode, accentColor);
             });
 
             this._clearCommitInfoItems();
@@ -721,14 +633,13 @@ const Indicator = GObject.registerClass(
 
 export default class WeeklyCommitsExtension extends Extension {
     enable() {
-        // Set up user preferences and settings
         this._preferences = new ExtensionSettings(this);
 
-        // Listen for changes to panel position settings so we can move the indicator
-        this._positionChangedId = this._preferences._settings.connect('changed', (settings, key) => {
-            if (key === 'panel-position' || key === 'panel-index') {
-                this._updateIndicatorPosition();
-            }
+        this._positionChangedId = this._preferences.connectSettingChanged('panel-position', () => {
+            this._updateIndicatorPosition();
+        });
+        this._indexChangedId = this._preferences.connectSettingChanged('panel-index', () => {
+            this._updateIndicatorPosition();
         });
 
         // Wait a bit before creating the indicator to ensure GNOME Shell is ready
@@ -736,7 +647,7 @@ export default class WeeklyCommitsExtension extends Extension {
         this._enableTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
             this._enableTimeoutId = null;
             this._updateIndicatorPosition();
-            return GLib.SOURCE_REMOVE; // Don't repeat this timeout
+            return GLib.SOURCE_REMOVE;
         });
     }
 
@@ -766,10 +677,13 @@ export default class WeeklyCommitsExtension extends Extension {
             this._enableTimeoutId = null;
         }
 
-        // Stop listening for settings changes
         if (this._positionChangedId) {
-            this._preferences._settings.disconnect(this._positionChangedId);
+            this._preferences.disconnectSettingChanged(this._positionChangedId);
             this._positionChangedId = null;
+        }
+        if (this._indexChangedId) {
+            this._preferences.disconnectSettingChanged(this._indexChangedId);
+            this._indexChangedId = null;
         }
 
         // Remove the indicator from the panel

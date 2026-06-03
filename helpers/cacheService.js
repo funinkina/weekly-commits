@@ -1,4 +1,3 @@
-"use strict";
 import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 
