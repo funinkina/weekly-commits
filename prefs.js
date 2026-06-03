@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
+import Gdk from 'gi://Gdk';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 import About from './helpers/about.js';
@@ -203,7 +204,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             { key: 'YlGnBu', label: _('YlGnBu') },
             { key: 'solarizedDark', label: _('Solarized Dark') },
             { key: 'solarizedLight', label: _('Solarized Light') },
-            { key: 'catpuccin', label: _('Catpuccin') }
+            { key: 'catpuccin', label: _('Catpuccin') },
+            { key: 'custom', label: _('Custom') }
         ];
 
         const themeModel = new Gtk.StringList();
@@ -216,6 +218,37 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
         });
 
         displayGroup.add(themeRow);
+
+        // Custom theme: pick one accent color; the intensity ramp is generated automatically
+        const accentRow = new Adw.ActionRow({
+            title: _('Custom Accent Color'),
+            subtitle: _('Pick one color; the intensity ramp is generated automatically')
+        });
+
+        const colorBtn = new Gtk.ColorDialogButton({
+            dialog: new Gtk.ColorDialog(),
+            valign: Gtk.Align.CENTER
+        });
+
+        const rgba = new Gdk.RGBA();
+        rgba.parse(settings.get_string('custom-accent-color') || '#40c463');
+        colorBtn.set_rgba(rgba);
+
+        colorBtn.connect('notify::rgba', () => {
+            const c = colorBtn.get_rgba();
+            const hex = '#' + [c.red, c.green, c.blue]
+                .map(v => Math.round(v * 255).toString(16).padStart(2, '0')).join('');
+            settings.set_string('custom-accent-color', hex);
+        });
+
+        accentRow.add_suffix(colorBtn);
+        accentRow.activatable_widget = colorBtn;
+        displayGroup.add(accentRow);
+
+        const CUSTOM_THEME_INDEX = themes.findIndex(t => t.key === 'custom');
+        const updateAccentVisible = () => { accentRow.visible = themeRow.selected === CUSTOM_THEME_INDEX; };
+        themeRow.connect('notify::selected', updateAccentVisible);
+        updateAccentVisible();
 
         const positionGroup = new Adw.PreferencesGroup();
         positionGroup.set_title(_('Panel Position'));

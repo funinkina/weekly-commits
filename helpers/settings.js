@@ -100,6 +100,14 @@ export class ExtensionSettings {
         this._settings.set_enum('color-mode', value);
     }
 
+    get customAccentColor() {
+        return this._settings.get_string('custom-accent-color') || '#40c463';
+    }
+
+    set customAccentColor(value) {
+        this._settings.set_string('custom-accent-color', value || '#40c463');
+    }
+
     connectChanged(callback) {
         return this._settings.connect('changed', callback);
     }

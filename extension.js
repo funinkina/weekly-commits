@@ -445,7 +445,9 @@ const Indicator = GObject.registerClass(
         }
 
         _getThemedColor(count, themeName, colorMode) {
-            const theme = THEMES[themeName] || THEMES.standard;
+            const theme = themeName === 'custom'
+                ? this._buildCustomTheme(this._preferences.customAccentColor)
+                : (THEMES[themeName] || THEMES.standard);
 
             if (colorMode === 'grade') {
                 const grade = this._getCommitGrade(count);
@@ -454,6 +456,75 @@ const Indicator = GObject.registerClass(
                 // Opacity mode - use grade1 color as base for active, grade0 for inactive
                 return count > 0 ? theme.grade3 : theme.grade0;
             }
+        }
+
+        _buildCustomTheme(accentHex) {
+            // Derive a 4-level intensity ramp from a single accent color by
+            // shifting HSL lightness. grade1 = lightest, grade4 = darkest.
+            const [h, s, l] = this._rgbToHsl(...this._hexToRgb(accentHex || '#40c463'));
+            const clamp = v => Math.max(0, Math.min(1, v));
+            const shade = dl => this._rgbToHex(...this._hslToRgb(h, s, clamp(l + dl)));
+            return {
+                grade0: '#ebedf0',     // unused (empty boxes get a white fill)
+                grade1: shade(+0.25),  // lightest
+                grade2: shade(+0.10),
+                grade3: shade(0),      // accent = base; also used by opacity mode
+                grade4: shade(-0.15),  // darkest
+            };
+        }
+
+        _hexToRgb(hex) {
+            const m = String(hex).replace('#', '');
+            const n = m.length === 3 ? m.split('').map(c => c + c).join('') : m;
+            return [
+                parseInt(n.slice(0, 2), 16),
+                parseInt(n.slice(2, 4), 16),
+                parseInt(n.slice(4, 6), 16),
+            ];
+        }
+
+        _rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h = 0, s = 0;
+            const l = (max + min) / 2;
+            if (max !== min) {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return [h, s, l];
+        }
+
+        _hslToRgb(h, s, l) {
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1 / 6) return p + (q - p) * 6 * t;
+                    if (t < 1 / 2) return q;
+                    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1 / 3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1 / 3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        _rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
         }
 
         _formatDateWithCommits(date, count) {
@@ -731,7 +802,7 @@ const Indicator = GObject.registerClass(
             const themeKeys = [
                 'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad',
                 'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu',
-                'solarizedDark', 'solarizedLight', 'catpuccin'
+                'solarizedDark', 'solarizedLight', 'catpuccin', 'custom'
             ];
             const currentThemeName = themeKeys[this._preferences.themeName] || 'standard';
 

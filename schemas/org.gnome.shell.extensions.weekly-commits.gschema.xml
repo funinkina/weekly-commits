@@ -16,6 +16,7 @@
     <value value="12" nick="solarizedDark"/>
     <value value="13" nick="solarizedLight"/>
     <value value="14" nick="catpuccin"/>
+    <value value="15" nick="custom"/>
   </enum>
 
   <enum id="org.gnome.shell.extensions.weekly-commits.color-mode">
@@ -105,6 +106,11 @@
       <default>'opacity'</default>
       <summary>Color Mode</summary>
       <description>Whether to use opacity-based or grade-based coloring for commit activity.</description>
+    </key>
+    <key name="custom-accent-color" type="s">
+      <default>'#40c463'</default>
+      <summary>Custom Accent Color</summary>
+      <description>Accent hex color used to auto-generate the Custom theme ramp.</description>
     </key>
   </schema>
 </schemalist>
