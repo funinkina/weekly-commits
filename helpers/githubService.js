@@ -2,6 +2,8 @@
 import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 
+import { session, USER_AGENT } from './http.js';
+
 /**
  * Format a Date as a local-timezone YYYY-MM-DD string.
  * Local time is used deliberately so all services agree on day boundaries
@@ -69,10 +71,12 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
     const queryFromDate = new Date(new Date().setDate(new Date().getDate() - 10)).toISOString();
     const queryToDate = new Date(new Date().setDate(new Date().getDate() + 3)).toISOString();
 
+    // Pass user input as GraphQL variables rather than interpolating it into
+    // the query string, so unusual usernames can't alter the query structure.
     const query = `
-    query {
-        user(login: "${username}") {
-            contributionsCollection(from: "${queryFromDate}", to: "${queryToDate}") {
+    query ($login: String!, $from: DateTime!, $to: DateTime!) {
+        user(login: $login) {
+            contributionsCollection(from: $from, to: $to) {
                 contributionCalendar {
                     weeks {
                         contributionDays {
@@ -84,17 +88,17 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
             }
         }
     }`;
+    const variables = { login: username, from: queryFromDate, to: queryToDate };
 
-    const session = new Soup.Session();
     const message = Soup.Message.new('POST', 'https://api.github.com/graphql');
     if (!message) {
         throw new Error('Failed to create Soup.Message');
     }
     message.request_headers.append('Authorization', `bearer ${token}`);
     message.request_headers.append('Content-Type', 'application/json');
-    message.request_headers.append('User-Agent', 'GNOME Shell Extension Weekly Commits');
+    message.request_headers.append('User-Agent', USER_AGENT);
 
-    const queryBytes = new GLib.Bytes(new TextEncoder().encode(JSON.stringify({ query })));
+    const queryBytes = new GLib.Bytes(new TextEncoder().encode(JSON.stringify({ query, variables })));
     message.set_request_body_from_bytes('application/json', queryBytes);
 
     let responseBytes;

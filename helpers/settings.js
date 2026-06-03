@@ -20,19 +20,22 @@ export class ExtensionSettings {
         this._settings.set_string('custom-instance-url', value || '');
     }
 
-    get githubUsername() {
+    // Note: the underlying gsettings keys keep their historical 'github-*'
+    // names (renaming them would break existing installs); only the accessor
+    // names are service-neutral, since they apply to every supported service.
+    get username() {
         return this._settings.get_string('github-username') || '';
     }
 
-    set githubUsername(value) {
+    set username(value) {
         this._settings.set_string('github-username', value || '');
     }
 
-    get githubToken() {
+    get token() {
         return this._settings.get_string('github-token') || '';
     }
 
-    set githubToken(value) {
+    set token(value) {
         this._settings.set_string('github-token', value || '');
     }
 

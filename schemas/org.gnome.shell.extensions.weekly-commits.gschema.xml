@@ -59,18 +59,18 @@
     </key>
     <key name="github-username" type="s">
       <default>''</default>
-      <summary>GitHub Username</summary>
-      <description>Your GitHub username to fetch contribution data.</description>
+      <summary>Username</summary>
+      <description>Your username on the selected service, used to fetch contribution data.</description>
     </key>
     <key name="github-token" type="s">
       <default>''</default>
-      <summary>GitHub Personal Access Token</summary>
-      <description>Your GitHub Personal Access Token for API authentication.</description>
+      <summary>Personal Access Token</summary>
+      <description>Personal Access Token for the selected service's API authentication.</description>
     </key>
     <key name="refresh-interval" type="i">
       <default>21600</default>
       <summary>Refresh Interval</summary>
-      <description>Time in seconds between refreshing GitHub contribution data.</description>
+      <description>Time in seconds between refreshing contribution data.</description>
     </key>
     <key name="panel-position" enum="org.gnome.shell.extensions.weekly-commits.panel-position">
       <default>'right'</default>

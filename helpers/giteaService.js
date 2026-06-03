@@ -3,6 +3,7 @@ import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 
 import { getDates, toLocalDateString } from './githubService.js';
+import { session, USER_AGENT } from './http.js';
 
 /**
  * @param {string} username
@@ -27,7 +28,6 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
     const targetDates = getDates(true, showCurrentWeekOnly, weekStartDay);
 
     const url = `${baseUrl}/api/v1/users/${encodeURIComponent(username)}/heatmap`;
-    const session = new Soup.Session();
     const message = Soup.Message.new('GET', url);
     if (!message) {
         throw new Error('Failed to create Soup.Message');
@@ -37,7 +37,7 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
         message.request_headers.append('Authorization', `token ${token}`);
     }
     message.request_headers.append('Content-Type', 'application/json');
-    message.request_headers.append('User-Agent', 'GNOME Shell Extension Weekly Commits');
+    message.request_headers.append('User-Agent', USER_AGENT);
 
     let responseBytes;
     try {

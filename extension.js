@@ -22,6 +22,13 @@ import {
     COMMIT_THRESHOLDS, MESSAGES, THEMES, THEME_KEYS,
 } from './helpers/constants.js';
 
+// Maps a service-type enum value to its fetch implementation. GitHub is the
+// default and ignores the trailing instanceUrl argument the others accept.
+const CONTRIBUTION_FETCHERS = {
+    [SERVICE_TYPE_GITEA]: fetchGiteaContributions,
+    [SERVICE_TYPE_GITLAB]: fetchGitLabContributions,
+};
+
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
         _init(preferences, extension) {
@@ -478,8 +485,8 @@ const Indicator = GObject.registerClass(
 
                 // Get user's settings from the preferences
                 const {
-                    githubUsername: username,
-                    githubToken: token,
+                    username,
+                    token,
                     showCurrentWeekOnly,
                     weekStartDay,
                     highlightCurrentDay,
@@ -512,11 +519,8 @@ const Indicator = GObject.registerClass(
 
                 try {
                     // Fetch commit data from the configured service
-                    counts = serviceType === SERVICE_TYPE_GITEA
-                        ? await fetchGiteaContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
-                        : serviceType === SERVICE_TYPE_GITLAB
-                            ? await fetchGitLabContributions(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl)
-                            : await fetchGitHubContributions(username, token, showCurrentWeekOnly, weekStartDay);
+                    const fetchForService = CONTRIBUTION_FETCHERS[serviceType] ?? fetchGitHubContributions;
+                    counts = await fetchForService(username, token, showCurrentWeekOnly, weekStartDay, customInstanceUrl);
 
                     if (!counts || counts.length !== 7) {
                         throw new Error('Live fetch did not return a valid 7-day count array.');

@@ -1,7 +1,7 @@
 {
   "name": "Weekly Commits",
   "version": "8",
-  "description": "See your weekly GitHub commits in top bar",
+  "description": "See your weekly GitHub, Gitea / Forgejo or GitLab commits in the top bar",
   "uuid": "weekly-commits@funinkina.is-a.dev",
   "author": "Aryan Kushwaha <hello@funinkina.co.in>",
   "license": "MIT",
