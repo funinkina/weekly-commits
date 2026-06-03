@@ -1,7 +1,7 @@
 <div align="center">
   <img width="100" height="100" alt="weekly-commits-logo" src="https://github.com/user-attachments/assets/764a3bb2-367c-4f39-851c-67a781211451" />
   <h1>Weekly Commits</h1>
-  <p><strong>A GNOME Shell extension to visualize your GitHub contributions in the top bar</strong></p>
+  <p><strong>A GNOME Shell extension to visualize your GitHub, GitLab, or Gitea / Forgejo contributions in the top bar</strong></p>
   
   <img width="307" height="97" alt="screenshot" src="https://github.com/user-attachments/assets/9afeaa0e-a5bb-4e46-b938-4d9d717dcbcd" />
 
@@ -24,18 +24,24 @@
 
 ## 🔥 Features
 
-**Weekly Commits** transforms your GitHub activity into a beautiful visual representation directly in your GNOME Shell top bar. Stay motivated and track your coding consistency at a glance!
+**Weekly Commits** transforms your git hosting activity into a beautiful visual representation directly in your GNOME Shell top bar. Stay motivated and track your coding consistency at a glance!
 
 ### ✨ Core Features
 - 📊 **Visual Contribution Calendar**: Seven colorful boxes representing your weekly commit activity
 - 🖱️ **Interactive Popup**: Click to see detailed daily commit counts
-- ⚙️ **Easy Configuration**: Simple GUI preferences for GitHub credentials and settings
+- ⚙️ **Easy Configuration**: Simple GUI preferences for credentials and settings
 - 🔄 **Auto-sync**: Configurable intervals to keep your data fresh
 - 💾 **Offline Cache Fallback**: Stores the last successful commit data locally and reuses it when network/API requests fail
 - 📍 **Flexible Positioning**: Place the widget anywhere on your top bar
 
+### 🌐 Multi-Service Support
+- **GitHub**: Personal Access Token authentication via the GitHub GraphQL API
+- **GitLab**: Works with gitlab.com or any self-hosted GitLab instance
+- **Gitea / Forgejo**: Works with any self-hosted Gitea or Forgejo instance
+
 ### 🎨 Theming & Customization
 - **14+ Beautiful Themes**: GitHub, Dracula, Halloween, Panda, Solarized, and more
+- **Custom Theme**: Pick any accent color — the full intensity ramp is generated automatically
 - **Dual Coloring Modes**: 
   - *Opacity-based*: Subtle transparency effects
   - *Grade-based*: Distinct color intensities
@@ -72,33 +78,37 @@
    Or use the GNOME Extensions app
 
 ### System Requirements
-- GNOME Shell 46, 47, or 48
+- GNOME Shell 46, 47, 48, 49, or 50
 - Internet connection for live API updates (last successful data is cached for offline fallback)
 
 ## ⚙️ Configuration
 
-### GitHub Authentication Setup
+### Service Setup
 
-To start tracking your commits, you'll need to configure your GitHub credentials:
+Open Preferences by right-clicking the widget in the top bar, then select the **Git Service** you want to track.
 
-#### Step 1: Generate a Personal Access Token
+#### GitHub
 1. Go to [GitHub Personal Access Tokens](https://github.com/settings/personal-access-tokens/new)
 2. Create a **Fine-grained Personal Access Token** with:
    - **Repository Access**: "All repositories" or select specific ones
    - **Permissions**: Read access to repository metadata and contents
 3. Copy the generated token
+4. In Preferences, select **GitHub**, enter your username and paste the token
 
-#### Step 2: Configure the Extension
-1. Right-click on the Weekly Commits widget in your top bar
-2. Select "Preferences" or use the GNOME Extensions app
-3. Enter your:
-   - **GitHub Username**: Your GitHub account username
-   - **Personal Access Token**: The token you generated in Step 1
+#### Gitea / Forgejo
+1. In your Gitea/Forgejo instance, go to **Settings → Applications → Access Tokens**
+2. Generate a token with read access to your account
+3. In Preferences, select **Gitea / Forgejo**, enter the **Instance URL** (e.g. `https://gitea.example.com`), your username, and the token
 
-#### Step 3: Customize Settings (Optional)
-- **Update Interval**: How often to refresh data (default: 1 hour)
+#### GitLab
+1. Go to **User Settings → Access Tokens** on your GitLab instance (or gitlab.com)
+2. Create a token with the `read_api` scope
+3. In Preferences, select **GitLab**, enter the **Instance URL** (e.g. `https://gitlab.com` or your self-hosted URL), your username, and the token
+
+### Customize Settings (Optional)
+- **Update Interval**: How often to refresh data (default: 6 hours)
 - **Position**: Where to place the widget in the top bar
-- **Theme**: Choose from 14+ beautiful color themes
+- **Theme**: Choose from 14+ beautiful color themes or pick a **Custom** accent color
 - **Coloring Mode**: Opacity-based or grade-based visualization
 - **Week Start**: Monday or Sunday
 
@@ -121,6 +131,7 @@ Weekly Commits comes with a variety of beautiful themes to match your desktop:
 | **Catpuccin Green**      | Soft green theme based around Frappe Green   |
 | **Blue, Pink, Teal**     | Vibrant single-color themes                  |
 | **Sunny, YlGnBu**        | Gradient and scientific visualization themes |
+| **Custom**               | Pick any accent color; ramp generated automatically |
 
 ## 🛠️ Development & Contributing
 
@@ -162,15 +173,17 @@ Contributions are welcome! Please:
 5. Open a Pull Request
 
 ### Roadmap
-- [x] ✅ Settings page for GitHub credentials
+- [x] ✅ Settings page for credentials
 - [x] ✅ Automatic data fetching with configurable intervals
 - [x] ✅ Customizable top bar positioning
 - [x] ✅ Interactive daily commit popup
 - [x] ✅ Week start day configuration (Monday/Sunday)
 - [x] ✅ Multiple color themes and coloring modes
+- [x] ✅ Custom accent color theme with auto-generated intensity ramp
+- [x] ✅ Support for GitLab (hosted and self-hosted)
+- [x] ✅ Support for Gitea / Forgejo (self-hosted)
 - [ ] 🔄 Customizable commit view thresholds
 - [ ] 🔄 Internationalization and translations
-- [ ] 🔄 Support for multiple GitHub accounts
 - [ ] 🔄 Additional visualization modes
 
 ## 💖 Support the Project
@@ -191,8 +204,9 @@ If you find Weekly Commits useful, consider supporting its development:
 ### Common Issues
 
 **Extension not showing commits?**
-- Verify your GitHub username is correct
-- Ensure your Personal Access Token has proper permissions
+- Verify your username is correct for the selected service
+- Ensure your Personal Access Token has the required permissions (see service setup above)
+- For Gitea/Forgejo and GitLab, double-check the Instance URL (no trailing slash)
 - Check your internet connection
 - Look for error messages in `journalctl -f` while testing
 
