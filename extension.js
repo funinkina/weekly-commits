@@ -44,7 +44,8 @@ const THEME_NAMES = {
     pink: "Pink",                 // Pink/magenta gradient theme
     YlGnBu: "YlGnBu",            // Yellow-Green-Blue scientific colormap
     solarizedDark: 'Solarized Dark',   // Popular developer theme (dark)
-    solarizedLight: 'Solarized Light'  // Popular developer theme (light)
+    solarizedLight: 'Solarized Light', // Popular developer theme (light)
+    catpuccin: 'Catpuccin Frappe'       // Green theme Catpuccin Frappe (dark)
 };
 
 const THEMES = {
@@ -173,6 +174,15 @@ const THEMES = {
         grade2: "#cb4b16",
         grade1: "#b58900",
         grade0: "#eee8d5"
+    },
+    catpuccin: {
+        text: "#c6d0f5",
+        meta: "#a5adce",
+        grade4: "#5f9f57",
+        grade3: "#81b96f",
+        grade2: "#a6d189",
+        grade1: "#d4f8c4",
+        grade0: "#303446"
     }
 };
 
@@ -721,7 +731,7 @@ const Indicator = GObject.registerClass(
             const themeKeys = [
                 'standard', 'classic', 'githubDark', 'halloween', 'teal', 'leftPad',
                 'dracula', 'blue', 'panda', 'sunny', 'pink', 'YlGnBu',
-                'solarizedDark', 'solarizedLight'
+                'solarizedDark', 'solarizedLight', 'catpuccin'
             ];
             const currentThemeName = themeKeys[this._preferences.themeName] || 'standard';
 

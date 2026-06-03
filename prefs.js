@@ -202,7 +202,8 @@ export default class WeeklyCommitsPreferences extends ExtensionPreferences {
             { key: 'pink', label: _('Pink') },
             { key: 'YlGnBu', label: _('YlGnBu') },
             { key: 'solarizedDark', label: _('Solarized Dark') },
-            { key: 'solarizedLight', label: _('Solarized Light') }
+            { key: 'solarizedLight', label: _('Solarized Light') },
+            { key: 'catpuccin', label: _('Catpuccin') }
         ];
 
         const themeModel = new Gtk.StringList();
