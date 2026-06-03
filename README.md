@@ -118,6 +118,7 @@ Weekly Commits comes with a variety of beautiful themes to match your desktop:
 | **Halloween**            | Spooky orange and black theme                |
 | **Panda**                | Cute panda-inspired green theme              |
 | **Solarized Dark/Light** | Popular developer color schemes              |
+| **Catpuccin Green**      | Soft green theme based around Frappe Green   |
 | **Blue, Pink, Teal**     | Vibrant single-color themes                  |
 | **Sunny, YlGnBu**        | Gradient and scientific visualization themes |
 

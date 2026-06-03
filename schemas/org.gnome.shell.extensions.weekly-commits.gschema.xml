@@ -15,6 +15,7 @@
     <value value="11" nick="YlGnBu"/>
     <value value="12" nick="solarizedDark"/>
     <value value="13" nick="solarizedLight"/>
+    <value value="14" nick="catpuccin"/>
   </enum>
 
   <enum id="org.gnome.shell.extensions.weekly-commits.color-mode">
