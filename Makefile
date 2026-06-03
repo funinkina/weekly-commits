@@ -31,7 +31,6 @@ disable:
 pack: clean-pack
 	mkdir -p _pack
 	cp -r $(PACK_FILES) _pack/
-	glib-compile-schemas _pack/schemas
 	cd _pack && zip -r ../$(PACK_NAME) .
 	rm -rf _pack
 	@echo "Packaged: $(PACK_NAME)"
