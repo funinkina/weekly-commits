@@ -111,19 +111,9 @@ export class ExtensionSettings {
         this._settings.set_string('custom-accent-color', value || '#40c463');
     }
 
-    connectChanged(callback) {
-        return this._settings.connect('changed', callback);
-    }
-
-    disconnectChanged(handlerId) {
-        this._settings.disconnect(handlerId);
-    }
-
-    connectSettingChanged(key, callback) {
-        return this._settings.connect(`changed::${key}`, callback);
-    }
-
-    disconnectSettingChanged(handlerId) {
-        this._settings.disconnect(handlerId);
+    // Exposes the underlying Gio.Settings so callers can use
+    // connectObject()/disconnectObject() for signal cleanup.
+    get settings() {
+        return this._settings;
     }
 }

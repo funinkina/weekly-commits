@@ -15,6 +15,7 @@ import { getDates } from './helpers/dateUtils.js';
 import { buildCustomTheme } from './helpers/colorUtils.js';
 import { ExtensionSettings } from './helpers/settings.js';
 import { ContributionCache } from './helpers/cacheService.js';
+import { destroySession } from './helpers/http.js';
 import {
     BOX_SIZE, BOX_MARGIN, BORDER_RADIUS, DEFAULT_BOX_COLOR,
     DATE_FORMAT, DEFAULT_OPACITY, MAX_OPACITY_INCREASE, OPACITY_PER_COMMIT,
@@ -61,7 +62,6 @@ const Indicator = GObject.registerClass(
 
             this._preferences = preferences;
             this._extension = extension;
-            this._prefsChangedId = null;
             this._boxes = [];
             this._refreshTimeoutId = null;
             this._commitSection = null;
@@ -73,12 +73,12 @@ const Indicator = GObject.registerClass(
             this._setupMenuItems();
             this._updateContributionDisplay();
 
-            this._prefsChangedId = this._preferences.connectChanged(() => {
+            this._preferences.settings.connectObject('changed', () => {
                 this._clearCommitInfoItems();
                 this._updateContributionDisplay().finally(() => {
                     this._refreshMenu();
                 });
-            });
+            }, this);
         }
 
         _buildUI() {
@@ -131,7 +131,7 @@ const Indicator = GObject.registerClass(
             // Add "Refresh Now" button to the dropdown menu
             const refreshItem = new PopupMenu.PopupMenuItem(_('Refresh Now'));
             this._addIconToMenuItem(refreshItem, 'view-refresh-symbolic');
-            refreshItem.connect('activate', () => {
+            refreshItem.connectObject('activate', () => {
                 // Show user we're working on it
                 refreshItem.label.text = _('Refreshing...');
 
@@ -143,13 +143,13 @@ const Indicator = GObject.registerClass(
                     refreshItem.label.text = _('Refresh Now');
                     this._refreshMenu();
                 });
-            });
+            }, this);
             this.menu.addMenuItem(refreshItem);
 
             // Add "Settings" button to open extension preferences
             const settingsItem = new PopupMenu.PopupMenuItem(_('Settings'));
             this._addIconToMenuItem(settingsItem, 'preferences-system-symbolic');
-            settingsItem.connect('activate', () => this._openPreferences());
+            settingsItem.connectObject('activate', () => this._openPreferences(), this);
             this.menu.addMenuItem(settingsItem);
         }
 
@@ -556,20 +556,12 @@ const Indicator = GObject.registerClass(
             }
 
             if (this._commitSection) {
-                try {
-                    this._commitSection.destroy();
-                } catch (e) {
-                    // Ignore stale actor destroy races during teardown.
-                }
+                this._commitSection.destroy();
                 this._commitSection = null;
             }
 
             if (this._separator) {
-                try {
-                    this._separator.destroy();
-                } catch (e) {
-                    // Ignore stale actor destroy races during teardown.
-                }
+                this._separator.destroy();
                 this._separator = null;
             }
 
@@ -617,10 +609,7 @@ const Indicator = GObject.registerClass(
                 this._refreshTimeoutId = null;
             }
 
-            if (this._prefsChangedId) {
-                this._preferences.disconnectChanged(this._prefsChangedId);
-                this._prefsChangedId = null;
-            }
+            this._preferences.settings.disconnectObject(this);
 
             this._clearCommitInfoItems();
             this._boxes = null;
@@ -635,12 +624,11 @@ export default class WeeklyCommitsExtension extends Extension {
     enable() {
         this._preferences = new ExtensionSettings(this);
 
-        this._positionChangedId = this._preferences.connectSettingChanged('panel-position', () => {
-            this._updateIndicatorPosition();
-        });
-        this._indexChangedId = this._preferences.connectSettingChanged('panel-index', () => {
-            this._updateIndicatorPosition();
-        });
+        this._preferences.settings.connectObject(
+            'changed::panel-position', () => this._updateIndicatorPosition(),
+            'changed::panel-index', () => this._updateIndicatorPosition(),
+            this
+        );
 
         // Wait a bit before creating the indicator to ensure GNOME Shell is ready
         // This prevents issues during login/startup
@@ -677,14 +665,7 @@ export default class WeeklyCommitsExtension extends Extension {
             this._enableTimeoutId = null;
         }
 
-        if (this._positionChangedId) {
-            this._preferences.disconnectSettingChanged(this._positionChangedId);
-            this._positionChangedId = null;
-        }
-        if (this._indexChangedId) {
-            this._preferences.disconnectSettingChanged(this._indexChangedId);
-            this._indexChangedId = null;
-        }
+        this._preferences.settings.disconnectObject(this);
 
         // Remove the indicator from the panel
         if (this._indicator) {
@@ -694,5 +675,9 @@ export default class WeeklyCommitsExtension extends Extension {
 
         // Clean up preferences
         this._preferences = null;
+
+        // Abort any in-flight requests and drop the shared Soup session so
+        // it doesn't outlive the extension.
+        destroySession();
     }
 }

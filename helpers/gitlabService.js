@@ -2,7 +2,7 @@ import GLib from 'gi://GLib';
 import Soup from 'gi://Soup';
 
 import { getDates, toLocalDateString } from './dateUtils.js';
-import { session, USER_AGENT } from './http.js';
+import { getSession, USER_AGENT } from './http.js';
 
 const PER_PAGE = 100;   // GitLab's maximum page size for the events endpoint
 const MAX_PAGES = 10;   // Safety cap (1000 events) for very active accounts
@@ -51,7 +51,7 @@ export async function fetchContributions(username, token, showCurrentWeekOnly = 
 
         let responseBytes;
         try {
-            responseBytes = await session.send_and_read_async(message, GLib.PRIORITY_DEFAULT, null);
+            responseBytes = await getSession().send_and_read_async(message, GLib.PRIORITY_DEFAULT, null);
         } catch (e) {
             console.error(`Weekly Commits Extension: Network error - ${e.message}`);
             throw e;
