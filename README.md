@@ -13,7 +13,7 @@
   
   <p>
     <img src="https://img.shields.io/gnome-extensions/dt/weekly-commits%40funinkina.is-a.dev?color=57a8ff" alt="GitHub stars" />
-    <img src="https://img.shields.io/badge/GNOME%20Shell-46%20|%2047%20|%2048|%2049|%2050-blue" alt="GNOME Shell Version" />
+    <img src="https://img.shields.io/badge/GNOME%20Shell-46%20|%2047%20|%2048|%2049|%2050|%2051-blue" alt="GNOME Shell Version" />
     <img src="https://img.shields.io/github/stars/funinkina/weekly-commits" alt="GitHub stars" />
     <br>
     <img src="https://img.shields.io/github/license/funinkina/weekly-commits" alt="License" />
@@ -78,7 +78,7 @@
    Or use the GNOME Extensions app
 
 ### System Requirements
-- GNOME Shell 46, 47, 48, 49, or 50
+- GNOME Shell 46, 47, 48, 49, 50, or 51
 - Internet connection for live API updates (last successful data is cached for offline fallback)
 
 ## ⚙️ Configuration

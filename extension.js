@@ -84,7 +84,6 @@ const Indicator = GObject.registerClass(
         _buildUI() {
             // Create the main container that holds our week of commit boxes
             const containerBox = new St.BoxLayout({
-                vertical: true,
                 x_expand: false,
                 y_expand: true,
                 y_align: Clutter.ActorAlign.CENTER
